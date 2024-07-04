@@ -52,7 +52,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductColor
-        fields = ['name', 'color']
+        fields = ['id', 'name', 'color']
 
 
 

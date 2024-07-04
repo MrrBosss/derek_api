@@ -81,7 +81,7 @@ class CatalogList(generics.ListAPIView):
     http_method_names = ['get']
     pagination_class = None
 
-    
+
     
 class ProductList(generics.ListAPIView):
     queryset = Product.objects.all()
