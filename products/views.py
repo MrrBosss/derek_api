@@ -1,7 +1,6 @@
-from rest_framework import generics,mixins, viewsets ,filters
+from rest_framework import generics,mixins, viewsets
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog
 from .serializers import ProductSerializer, ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
-from api.mixins import StaffEditorPermissionMixin, UserQuerySetMixin
 from rest_framework.pagination import PageNumberPagination
 from .serializers import ProductSerializer
 from rest_framework import generics
@@ -83,7 +82,7 @@ class CatalogList(generics.ListAPIView):
 
 
     
-class ProductList(generics.ListAPIView):
+class ProductListView(generics.ListAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     http_method_names = ['get']

@@ -17,7 +17,7 @@ class ProductFilter(django_filters.FilterSet):
         queryset=ProductColor.objects.all(),
         label='Color'
     )
-    category = django_filters.ChoiceFilter(
+    category = django_filters.ModelChoiceFilter(
         field_name='category',
         queryset=Category.objects.all(),
         label='Category'
