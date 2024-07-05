@@ -59,6 +59,7 @@ class FAQ(models.Model):
 
 class Banner(models.Model):
     user = models.ForeignKey(User, default=1, null=True, on_delete=models.SET_NULL)
+    image = models.ImageField(upload_to="banners", null=True)
     title = models.CharField(max_length=500, null=True)
     subtitle = models.TextField(blank=True, null=True)
     link = models.CharField(max_length=250, null=True)
