@@ -1,16 +1,27 @@
 # Register your models here.
 from django.contrib import admin
 from .models import Product, ProductWeight, FAQ, Banner , Brand, Category, Order
-from .models import  ProductColor, Catalog 
+from .models import  ProductColor, Catalog, OrderItem
 
 
+
+class OrderItemInline(admin.TabularInline):
+    model = OrderItem
+    extra = 0
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ["product", "quantity", "color", "weight", "total_price"]
+    list_display = ['id', 'order_date', 'get_total_quantity', 'get_total_price']
+    inlines = [OrderItemInline]
 
-    def total_price(self, obj):
-        return obj.total_price
+    def get_total_quantity(self, obj):
+        return sum(item.quantity for item in obj.items.all())
+    get_total_quantity.short_description = 'Total Quantity'
+
+    def get_total_price(self, obj):
+        return sum(item.subtotal for item in obj.items.all())
+    get_total_price.short_description = 'Total Price'
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

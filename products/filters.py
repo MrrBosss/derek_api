@@ -13,7 +13,7 @@ class ProductFilter(django_filters.FilterSet):
     )
 
     color = django_filters.ModelMultipleChoiceFilter(
-        field_name='color',
+        field_name='color', 
         queryset=ProductColor.objects.all(),
         label='Color'
     )

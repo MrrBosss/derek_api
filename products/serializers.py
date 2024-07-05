@@ -1,8 +1,10 @@
 from rest_framework import serializers
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category , Order, Catalog# ProductList,
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog# ProductList,
 from rest_framework.reverse import reverse
 from . import validators
 from api.serializers import UserPublicSerializer
+from .models import Order, OrderItem
+
 
 
 
@@ -108,10 +110,31 @@ class BrandSerializer(serializers.ModelSerializer):
         
 
 
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = ['id', 'product', 'color', 'weight', 'quantity']
+
+
+
 class OrderSerializer(serializers.ModelSerializer):
+    items = OrderItemSerializer(many=True)
+
     class Meta:
         model = Order
-        fields = "__all__"
+        fields = ['id', 'order_date', 'items']
+
+    def validate_items(self, value):
+        if not value:
+            raise serializers.ValidationError("Items list cannot be empty")
+        return value
+
+    def create(self, validated_data):
+        items_data = validated_data.pop('items')
+        order = Order.objects.create(**validated_data)
+        for item_data in items_data:
+            OrderItem.objects.create(order=order, **item_data)
+        return order
 
 
 

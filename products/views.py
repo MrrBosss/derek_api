@@ -1,4 +1,4 @@
-from rest_framework import generics,mixins, viewsets
+from rest_framework import generics,mixins, viewsets ,filters
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog
 from .serializers import ProductSerializer, ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
 from api.mixins import StaffEditorPermissionMixin, UserQuerySetMixin
@@ -98,7 +98,8 @@ class ProductDetailView(generics.RetrieveAPIView):
    
 
 
+
 class Orderview(generics.CreateAPIView):
     queryset = Order.objects.all()
-    serializer_class = OrderSerializer
+    serializer_class = OrderSerializer  
     http_method_names = ['post']
