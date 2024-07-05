@@ -122,7 +122,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'order_date', 'items']
+        fields = ['id', 'order_date', 'name', 'phone_number', 'items']
 
     def validate_items(self, value):
         if not value:

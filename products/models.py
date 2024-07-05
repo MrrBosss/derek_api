@@ -150,6 +150,8 @@ class Product(models.Model):
 
 class Order(models.Model):
     order_date = models.DateTimeField(auto_now_add=True,null=True)
+    name = models.CharField(max_length=100, null=True)
+    phone_number = models.CharField(max_length=20, null=True)
     # Add other fields like customer information, shipping details, etc.
 
 class OrderItem(models.Model):
