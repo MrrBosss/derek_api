@@ -1,9 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
 from products.views import FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, Orderview, CatalogList
-from products.views import ProductDetailView, ProductColorViewset, ProductListView, CategoryView  
-
-
+from products.views import ProductDetailView, ProductColorViewset, ProductListView, CategoryView
 
 router = DefaultRouter()
 router.register('products-color', ProductColorViewset, basename='products-color')
