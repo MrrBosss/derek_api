@@ -109,3 +109,5 @@ class TeamListView(generics.ListAPIView):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
     http_method_names = ['get'] 
+    pagination_class = None
+    
