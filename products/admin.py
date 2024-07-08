@@ -1,7 +1,7 @@
 # Register your models here.
 from django.contrib import admin
 from .models import Product, ProductWeight, FAQ, Banner , Brand, Category, Order
-from .models import  ProductColor, Catalog, OrderItem
+from .models import  ProductColor, Catalog, OrderItem, Team
 
 
 
@@ -41,3 +41,4 @@ admin.site.register(Banner)
 
 admin.site.register(Brand)
 
+admin.site.register(Team)

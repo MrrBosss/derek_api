@@ -1,12 +1,12 @@
 from rest_framework import generics,mixins, viewsets
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog
-from .serializers import ProductSerializer, ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
-from rest_framework.pagination import PageNumberPagination
-from .serializers import ProductSerializer
-from rest_framework import generics
-from .serializers import  ProductColorSerializer, ProductDetailSerializer, CategorySerializer, OrderSerializer, CatalogSerializer
-from .filters import ProductFilter
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.pagination import PageNumberPagination
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team
+from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
+from .serializers import ProductColorSerializer,CategorySerializer, OrderSerializer, CatalogSerializer
+from .serializers import TeamSerializer, ProductDetailSerializer
+from .filters import ProductFilter
+
 
 
 
@@ -102,3 +102,10 @@ class Orderview(generics.CreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer  
     http_method_names = ['post']
+
+
+
+class TeamListView(generics.ListAPIView):
+    queryset = Team.objects.all()
+    serializer_class = TeamSerializer
+    http_method_names = ['get'] 
