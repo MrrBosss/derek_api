@@ -3,8 +3,6 @@ from django.urls import path
 from products.views import FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, Orderview, CatalogList
 from products.views import ProductDetailView, ProductColorViewset, ProductListView, CategoryView, TeamListView
 
-
-
 router = DefaultRouter()
 router.register('products-color', ProductColorViewset, basename='products-color')
 router.register('products-weight', ProductWeightViewSet, basename='products-weight')
