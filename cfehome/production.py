@@ -1,7 +1,6 @@
 from .settings import *
-import environ
-env = environ.Env()
-env.read_env(str(BASE_DIR / ".env"))
+from .settings import env
+
 
 MEDIA_ROOT = "/var/www/derek.itlink.uz/media"
 STATIC_ROOT = "/var/www/derek.itlink.uz/static"
