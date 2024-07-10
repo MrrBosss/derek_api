@@ -85,7 +85,7 @@ class Team(models.Model):
 
 
 class Product(models.Model):
-    title = models.CharField(max_length=120, null=True)
+    title = models.CharField(max_length=255, null=True)
     content = models.TextField(blank=True, null=True)
     price = models.FloatField(default=10.000)
     public = models.BooleanField(default=True)
