@@ -3,7 +3,7 @@ from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Ca
 from rest_framework.reverse import reverse
 from . import validators
 from api.serializers import UserPublicSerializer
-from .models import Order, OrderItem
+from .models import Order, OrderItem, Team
 
 
 
@@ -142,3 +142,10 @@ class CatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Catalog
         fields = "__all__"
+
+
+
+class TeamSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Team
+        fields = '__all__'

@@ -76,6 +76,14 @@ class Catalog(models.Model):
     catalog = models.FileField(upload_to='products')
 
 
+
+class Team(models.Model):
+    name = models.CharField(max_length=50, null=True)
+    image = models.ImageField(upload_to='images', null=True)
+    position = models.CharField(max_length=50, null=True)
+
+
+
 class Product(models.Model):
     title = models.CharField(max_length=120, null=True)
     content = models.TextField(blank=True, null=True)
