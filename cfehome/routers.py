@@ -1,6 +1,7 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
-from products.views import FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, Orderview, CatalogList
+from products.views import FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, Orderview, CatalogList, \
+    MoyskladProductAPIView
 from products.views import ProductDetailView, ProductColorViewset, ProductListView, CategoryView, TeamListView
 
 router = DefaultRouter()
@@ -16,5 +17,6 @@ urlpatterns += [
     path('orders/', Orderview.as_view(), name='orders'),
     path('products-list/', ProductListView.as_view(), name='products-list'),
     path("products-detail/<int:pk>/", ProductDetailView.as_view(), name='product-detail'),
-    path('team-list', TeamListView.as_view(), name='team-list'),
+    path('team-list/', TeamListView.as_view(), name='team-list'),
+    path('moysklad/', MoyskladProductAPIView.as_view(), name='moysklad-api'),
 ]

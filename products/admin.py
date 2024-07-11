@@ -27,7 +27,8 @@ class OrderAdmin(admin.ModelAdmin):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category']
+    list_display = ['title', 'category', 'guid']
+    search_fields = ['title']
 
 
 admin.site.register(Catalog)

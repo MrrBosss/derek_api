@@ -1,4 +1,6 @@
 import random
+import uuid
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
@@ -76,16 +78,15 @@ class Catalog(models.Model):
     catalog = models.FileField(upload_to='products')
 
 
-
 class Team(models.Model):
     name = models.CharField(max_length=50, null=True)
     image = models.ImageField(upload_to='images', null=True)
     position = models.CharField(max_length=50, null=True)
 
 
-
 class Product(models.Model):
     title = models.CharField(max_length=255, null=True)
+    guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     content = models.TextField(blank=True, null=True)
     price = models.FloatField(default=10.000)
     public = models.BooleanField(default=True)
