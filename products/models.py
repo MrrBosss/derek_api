@@ -96,6 +96,7 @@ class Product(models.Model):
     artikul = models.CharField(max_length=20)
     # color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, null= True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
+    stock = models.IntegerField(verbose_name="Ostatka", default=0)
 
     def get_absolute_url(self):
         return f"/api/products/{self.pk}/"

@@ -193,14 +193,17 @@ class MoyskladProductAPIView(APIView):
                 }, status=400)
 
 
-
 class MoyskladProductStockAPIView(APIView):
     def post(self, request):
         request_data = request.data
         try:
-            meta = request_data['events'][0]['meta']  # product
-            event = meta['type']
-            action = request_data['events'][0]['action']  # product
+            for stock in request_data:
+                product_id = stock['assortmentId']
+                stock_count = stock['stock']
+                product = Product.objects.filter(guid=product_id).first()
+                if product:
+                    product.stock = int(stock_count)
+                    product.save()
 
             data = {"success": True, "message": "Success"}
             return Response(data)
