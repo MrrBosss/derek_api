@@ -1,3 +1,4 @@
+import traceback
 from urllib.parse import urlparse
 
 import requests
@@ -176,4 +177,10 @@ class MoyskladProductAPIView(APIView):
             data = {"success": True, "message": "Success"}
             return Response(data)
         except Exception as e:
-            return Response({"success": False, "message": f"Error: {e}"}, status=400)
+            return Response(
+                {
+                    "success": False,
+                    "message": f"Error str: {str(e)}\n"
+                               f"Error repr: {repr(e)}\n"
+                               f"Traceback: {traceback.format_exc()}"
+                }, status=400)
