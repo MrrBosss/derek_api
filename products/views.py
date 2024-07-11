@@ -145,31 +145,35 @@ class ActionMapper:
 
 class MoyskladProductAPIView(APIView):
     def post(self, request):
-        print(request.data)
-        request_data: json_example = request.data
-        meta = request_data['events'][0]['meta']  # product
-        event = meta['type']
-        action = request_data['events'][0]['action']  # product
-        if event == EventMapper.PRODUCT:
-            if action == ActionMapper.CREATE:
-                url = meta['href']
-                response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-                if response.status_code == 200:
-                    create_product(response.json())
-            elif action == ActionMapper.UPDATE:
-                url = meta['href']
-                response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-                if response.status_code == 200:
-                    update_product(response.json())
-            elif action == ActionMapper.DELETE:
-                url = meta['href']
-                parsed_url = urlparse(url)
-                product_id = parsed_url.path.split('/')[-1]
-                delete_product(product_id)
-        elif event == EventMapper.COUNTERPARTY:
-            ...
-        elif event == EventMapper.RETAILDEMAND:
-            ...
+        request_data = request.data
+        try:
+            meta = request_data['events'][0]['meta']  # product
+            event = meta['type']
+            action = request_data['events'][0]['action']  # product
+            if event == EventMapper.PRODUCT:
+                if action == ActionMapper.CREATE:
+                    url = meta['href']
+                    response = requests.get(url,
+                                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+                    if response.status_code == 200:
+                        create_product(response.json())
+                elif action == ActionMapper.UPDATE:
+                    url = meta['href']
+                    response = requests.get(url,
+                                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+                    if response.status_code == 200:
+                        update_product(response.json())
+                elif action == ActionMapper.DELETE:
+                    url = meta['href']
+                    parsed_url = urlparse(url)
+                    product_id = parsed_url.path.split('/')[-1]
+                    delete_product(product_id)
+            elif event == EventMapper.COUNTERPARTY:
+                ...
+            elif event == EventMapper.RETAILDEMAND:
+                ...
 
-        data = {"success": True}
-        return Response(data)
+            data = {"success": True, "message": "Success"}
+            return Response(data)
+        except Exception as e:
+            return Response({"success": False, "message": f"Error: {e}"}, status=400)
