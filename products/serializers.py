@@ -3,7 +3,7 @@ from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Ca
 from rest_framework.reverse import reverse
 from . import validators
 from api.serializers import UserPublicSerializer
-from .models import Order, OrderItem, Team
+from .models import Order, OrderItem, Team, BestSeller
 
 
 
@@ -149,3 +149,16 @@ class TeamSerializer(serializers.ModelSerializer):
     class Meta:
         model = Team
         fields = '__all__'
+
+class BestProductSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['title', 'image', 'content']
+
+
+class BestSellerSerializer(serializers.ModelSerializer):
+    product_details = BestProductSerializer(source='product', read_only=True)
+    
+    class Meta:
+        model = BestSeller
+        fields = ['id', 'product', 'product_details'] 

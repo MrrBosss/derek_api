@@ -1,7 +1,7 @@
 # Register your models here.
 from django.contrib import admin
 from .models import Product, ProductWeight, FAQ, Banner , Brand, Category, Order
-from .models import  ProductColor, Catalog, OrderItem, Team
+from .models import  ProductColor, Catalog, OrderItem, Team, BestSeller
 
 
 class OrderItemInline(admin.TabularInline):
@@ -30,6 +30,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'category', 'guid']
     search_fields = ['title']
 
+admin.site.register(BestSeller)
 
 admin.site.register(Catalog)
 

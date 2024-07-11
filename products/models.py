@@ -143,6 +143,11 @@ class Product(models.Model):
 #         return 0
 
 
+
+class BestSeller(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    
+
 class Order(models.Model):
     order_date = models.DateTimeField(auto_now_add=True, null=True)
     name = models.CharField(max_length=100, null=True)

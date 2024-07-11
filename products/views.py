@@ -11,10 +11,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response
 
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team, BestSeller
 from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
 from .serializers import ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer
-from .serializers import TeamSerializer, ProductDetailSerializer
+from .serializers import TeamSerializer, ProductDetailSerializer, BestSellerSerializer
 from .filters import ProductFilter
 from .utils import create_product, update_product, delete_product
 
@@ -95,10 +95,17 @@ class ProductDetailView(generics.RetrieveAPIView):
     serializer_class = ProductDetailSerializer
 
 
-class Orderview(generics.CreateAPIView):
+class OrderView(generics.CreateAPIView):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     http_method_names = ['post']
+
+
+class BestSellerListView(generics.ListAPIView):
+    queryset = BestSeller.objects.all()
+    serializer_class = BestSellerSerializer
+    http_method_names = ['get']
+    pagination_class = None
 
 
 class TeamListView(generics.ListAPIView):
