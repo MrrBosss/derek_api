@@ -1,4 +1,36 @@
+import requests
+from django.conf import settings
+from requests.auth import HTTPBasicAuth
+from django.core.files.base import ContentFile
+
 from products.models import Category, ProductWeight, Product
+
+
+# Функция для получения данных об изображениях
+def get_images_data(url):
+    response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+    response.raise_for_status()  # Выбрасывает исключение, если запрос не успешен
+    return response.json()
+
+
+def save_first_image(product: Product, images_request_url):
+    images_data = get_images_data(images_request_url)
+    if images_data['rows']:
+        first_image_meta = images_data['rows'][0]['meta']['href']
+        image_response = requests.get(first_image_meta, auth=HTTPBasicAuth(
+            settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+        image_response.raise_for_status()  # Выбрасывает исключение, если запрос не успешен
+
+        image_content = ContentFile(image_response.content)
+
+        # Генерация имени файла
+        image_name = f"{product.id}_image.jpg"
+
+        # Сохранение изображения в поле image продукта
+        product.image.save(image_name, image_content, save=True)
+        print("Image saved successfully!")
+    else:
+        print("No images found.")
 
 
 def create_product(item):
@@ -7,6 +39,7 @@ def create_product(item):
     product_guid = item['id']
     product_price = item['salePrices'][0]['value'] / 100.0  # цена в копейках
     product_weight_value = item['weight']
+    images = item['images']['meta']
 
     # Создание или получение категории
     category_name = item.get('pathName', 'Default Category')
@@ -29,6 +62,8 @@ def create_product(item):
             'public': True,
         }
     )
+    if images['size'] > 0:
+        save_first_image(product, images['href'])
 
     # Добавление веса к продукту
     if product_weight:
@@ -44,6 +79,7 @@ def update_product(item):
     product_guid = item['id']
     product_price = item['salePrices'][0]['value'] / 100.0  # цена в копейках
     product_weight_value = item['weight']
+    images = item['images']['meta']
 
     # Создание или получение категории
     category_name = item.get('pathName', 'Default Category')
@@ -66,6 +102,8 @@ def update_product(item):
             'public': True,
         }
     )
+    if images['size'] > 0:
+        save_first_image(product, images['href'])
 
     # Добавление веса к продукту
     if product_weight:

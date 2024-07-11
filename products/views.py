@@ -184,3 +184,24 @@ class MoyskladProductAPIView(APIView):
                                f"Error repr: {repr(e)}\n"
                                f"Traceback: {traceback.format_exc()}"
                 }, status=400)
+
+
+
+class MoyskladProductStockAPIView(APIView):
+    def post(self, request):
+        request_data = request.data
+        try:
+            meta = request_data['events'][0]['meta']  # product
+            event = meta['type']
+            action = request_data['events'][0]['action']  # product
+
+            data = {"success": True, "message": "Success"}
+            return Response(data)
+        except Exception as e:
+            return Response(
+                {
+                    "success": False,
+                    "message": f"Error str: {str(e)}\n"
+                               f"Error repr: {repr(e)}\n"
+                               f"Traceback: {traceback.format_exc()}"
+                }, status=400)
