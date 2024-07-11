@@ -16,7 +16,7 @@ def get_images_data(url):
 def save_first_image(product: Product, images_request_url):
     images_data = get_images_data(images_request_url)
     if images_data['rows']:
-        first_image_meta = images_data['rows'][0]['meta']['href']
+        first_image_meta = images_data['rows'][0]['meta']['downloadHref']
         image_response = requests.get(first_image_meta, auth=HTTPBasicAuth(
             settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
         image_response.raise_for_status()  # Выбрасывает исключение, если запрос не успешен
