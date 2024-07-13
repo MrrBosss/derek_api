@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 import requests
 from django.conf import settings
 from requests.auth import HTTPBasicAuth
@@ -118,3 +120,17 @@ def delete_product(product_id):
     if product:
         product.public = False
         product.save()
+
+
+data3 = "https://api.moysklad.ru/api/remap/1.2/entity/product/b2e44cab-2a29-11ef-0a80-170d000a1962?expand=supplier",
+
+
+def update_stock(data):
+    product_url = data['meta']['href']
+    stock = data['stock']
+    parsed_url = urlparse(product_url)
+    product_id = parsed_url.path.split('/')[-1]
+    product_obj = Product.objects.filter(guid=product_id).first()
+    if product_obj:
+        product_obj.stock = int(stock)
+        product_obj.save()

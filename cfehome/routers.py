@@ -1,9 +1,12 @@
 from rest_framework.routers import DefaultRouter
 from django.urls import path
-from products.views import FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, OrderView, CatalogList, \
-    MoyskladProductAPIView
-from products.views import ProductDetailView, ProductColorViewset, ProductListView, CategoryView, TeamListView, \
-BestSellerListView
+from products.views import (
+    FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, OrderView, CatalogList,
+    MoyskladProductAPIView, MoyskladProductStockAPIView
+)
+from products.views import (
+    ProductDetailView, ProductColorViewset, ProductListView, CategoryView, TeamListView, BestSellerListView
+)
 
 router = DefaultRouter()
 router.register('products-color', ProductColorViewset, basename='products-color')
@@ -20,5 +23,6 @@ urlpatterns += [
     path("products-detail/<int:pk>/", ProductDetailView.as_view(), name='product-detail'),
     path('team-list/', TeamListView.as_view(), name='team-list'),
     path('moysklad/', MoyskladProductAPIView.as_view(), name='moysklad-api'),
-    path('bestseller-list/', BestSellerListView.as_view(), name='bestseller-list')
+    path('bestseller-list/', BestSellerListView.as_view(), name='bestseller-list'),
+    path('moysklad-stocks/', MoyskladProductStockAPIView.as_view(), name='moysklad-stocks-api'),
 ]
