@@ -130,21 +130,6 @@ class Product(models.Model):
         return '123'
 
 
-# class Order(models.Model):
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-#     color = models.CharField(max_length=20, null=True)
-#     weight = models.IntegerField(null=True)
-#     quantity = models.IntegerField(default=0)
-
-#     @property
-#     def total_price(self):
-#         # Calculate product's price sum
-#         if self.product:
-#             return self.quantity * self.product.price
-#         return 0
-
-
-
 class BestSeller(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     
