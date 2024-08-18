@@ -4,11 +4,9 @@ from .models import Product, FAQ, Banner
 from . models import Category
 
 
-
 @register(Product)
 class ProductTranslationOptions(TranslationOptions):
-    fields = ('title', 'content')
-
+    fields = ('title', 'description')
 
 
 @register(Banner)
@@ -16,11 +14,9 @@ class BannerTranslationOptions(TranslationOptions):
     fields = ('title','subtitle')
 
 
-
 @register(FAQ)
 class FAQTranslationOptions(TranslationOptions):
     fields = ('question', 'answer')
-
 
 
 @register(Category)

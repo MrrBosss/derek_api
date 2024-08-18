@@ -1,11 +1,11 @@
 from rest_framework import serializers
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog# ProductList,
+from drf_spectacular.utils import extend_schema_field
 from rest_framework.reverse import reverse
+
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog# ProductList,
 from . import validators
 from api.serializers import UserPublicSerializer
 from .models import Order, OrderItem, Team, BestSeller
-
-
 
 
 class ProductInlineSerializer(serializers.Serializer):
@@ -15,7 +15,6 @@ class ProductInlineSerializer(serializers.Serializer):
         read_only=True,
     )
     title = serializers.CharField(read_only=True)   
-
 
 
 class ProductSerializer(serializers.ModelSerializer):
@@ -50,19 +49,16 @@ class ProductSerializer(serializers.ModelSerializer):
         return reverse("product-edit", kwargs={"pk": obj.pk}, request=request)
 
 
-
 class ProductColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductColor
         fields = ['id', 'name', 'color']
 
 
-
 class ProductWeightSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductWeight
-        fields = "__all__"
-
+        fields = ['id', 'mass']
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
@@ -74,26 +70,47 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-
 class ProductSerializer(serializers.ModelSerializer):
+    calculated_price = serializers.SerializerMethodField()
+    weights = ProductWeightSerializer(many=True, source='weight')
+
     class Meta:
         model = Product
-        fields = "__all__"
+        fields = ['id', 'title', 'price', 'calculated_price', 'weights', 'artikul', 'category', 'stock','description']
+
+    @extend_schema_field(serializers.FloatField)
+    def get_calculated_price(self, obj) -> float:
+        # Implement your custom price calculation logic here
+        # For example, let's say the calculated price is price + 10% markup
+        return obj.price * 1.1  # Adjust the logic as needed
+
+    def get_calculated_price(self, obj):
+        request = self.context.get('request', None)
+        if request:
+            weight_id = request.query_params.get('weight_id', None)
+            if weight_id:
+                selected_weight = ProductWeight.objects.get(id=weight_id)
+                return obj.calculate_price(selected_weight)
+        return obj.price  # Return the base price if no weight is selected
 
 
-
-class CategorySerializer(serializers.ModelSerializer):
+class SubcategorySerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = "__all__"
-    
+        fields = ['id', 'name']
 
+class CategorySerializer(serializers.ModelSerializer):
+    subcategories = SubcategorySerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Category
+        fields = ['id', 'name', 'parent', 'subcategories']
+    
 
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
         model = FAQ
         fields = "__all__"
-
 
 
 class BannerSerializer(serializers.ModelSerializer):
@@ -102,19 +119,16 @@ class BannerSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-
 class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
         fields = "__all__"
         
 
-
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['id', 'product', 'color', 'weight', 'quantity']
-
 
 
 class OrderSerializer(serializers.ModelSerializer):
@@ -137,12 +151,10 @@ class OrderSerializer(serializers.ModelSerializer):
         return order
 
 
-
 class CatalogSerializer(serializers.ModelSerializer):
     class Meta:
         model = Catalog
         fields = "__all__"
-
 
 
 class TeamSerializer(serializers.ModelSerializer):
@@ -150,10 +162,11 @@ class TeamSerializer(serializers.ModelSerializer):
         model = Team
         fields = '__all__'
 
+
 class BestProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['title', 'image', 'content']
+        fields = ['title', 'image','description']
 
 
 class BestSellerSerializer(serializers.ModelSerializer):

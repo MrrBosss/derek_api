@@ -31,13 +31,6 @@ class ProductManager(models.Manager):
         return self.get_queryset().search(query, user=user)
 
 
-class ProductWeight(models.Model):
-    value = models.IntegerField()
-
-    def __str__(self):
-        return str(self.value)
-
-
 class ProductColor(models.Model):
     name = models.CharField(max_length=150)
     color = models.CharField(max_length=60)
@@ -61,17 +54,31 @@ class Banner(models.Model):
 
 class Brand(models.Model):
     brands = models.ImageField(upload_to="products", null=True)
-    name = models.CharField(max_length=500, null=True)
+    name = models.CharField(max_length=500, null=True,blank=True)
 
     def __str__(self):
         return str(self.brands)
 
 
-class Category(models.Model):
-    name = models.CharField(max_length=50)
+from django.db import models
 
-    def __str__(self) -> str:
+class Category(models.Model):
+    name = models.CharField(max_length=255)
+    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
+
+    class Meta:
+        verbose_name_plural = "Categories"
+
+    def __str__(self):
         return self.name
+
+    def is_subcategory(self):
+        """Returns True if the category is a subcategory."""
+        return self.parent is not None
+
+    def get_subcategories(self):
+        """Returns a QuerySet of subcategories for the current category."""
+        return self.subcategories.all()
 
 
 class Catalog(models.Model):
@@ -84,11 +91,18 @@ class Team(models.Model):
     position = models.CharField(max_length=50, null=True)
 
 
+class ProductWeight(models.Model):
+    mass = models.IntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.mass}g"
+
+
 class Product(models.Model):
     title = models.CharField(max_length=255, null=True)
     guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    content = models.TextField(blank=True, null=True)
-    price = models.FloatField(default=10.000)
+    description = models.TextField(blank=True, null=True)
+    price = models.FloatField(default=100)
     public = models.BooleanField(default=True)
     image = models.ImageField(upload_to="products", null=True, blank=True)
     weight = models.ManyToManyField(ProductWeight)
@@ -97,6 +111,24 @@ class Product(models.Model):
     # color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, null= True)
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
     stock = models.IntegerField(verbose_name="Ostatka", default=0)
+    ch_name = models.CharField(max_length=50, verbose_name='Xarakteristika nomi', null=True, blank=True)
+    ch_value = models.CharField(max_length=50, verbose_name='Xarakteristika qiymati', null=True, blank=True)
+
+
+    def calculate_price(self, selected_weight):
+        """
+        Calculate the price of the product based on the selected weight.
+        """
+        base_weight = 30  # Base weight in grams for the default price
+        base_price = self.price
+
+        # Calculate price per gram
+        price_per_gram = base_price / base_weight
+
+        # Adjust the price based on the selected weight
+        final_price = price_per_gram * selected_weight.mass
+
+        return round(final_price, 2)
 
     def get_absolute_url(self):
         return f"/api/products/{self.pk}/"
@@ -114,21 +146,18 @@ class Product(models.Model):
 
     @property
     def body(self):
-        return self.content
+        return self.description
 
-    def is_public(self):  # returns bool
-        return self.public  # True or False
+    def search_products(query=None):
+        products = Product.objects.all()
 
-    def get_tags_list(self):
-        return [random.choice(TAGS_MODELS_VALUES)]
+        if query:
+            products = products.filter(title__icontains=query)
 
-    @property
-    def sale_price(self):
-        
-        return "%.2f" % (float(self.price) * 0.8)
+        # Order by product group sequence, then by title
+        products = products.order_by('group__sequence', 'title')
 
-    def get_discount(self):
-        return '123'
+        return products
 
 
 class BestSeller(models.Model):

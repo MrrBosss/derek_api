@@ -39,7 +39,11 @@ admin.site.register(ProductWeight)
 
 admin.site.register(ProductColor)
 
-admin.site.register(Category)
+@admin.register(Category)
+class CategoryAdmin(admin.ModelAdmin):
+    list_display = ['name','parent','id']
+    list_display_links = ['name','parent']
+    search_fields = ['name']
 
 admin.site.register(FAQ)
 

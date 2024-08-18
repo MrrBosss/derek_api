@@ -6,6 +6,7 @@ from requests.auth import HTTPBasicAuth
 from dataclasses import dataclass
 
 from django.conf import settings
+from django.db import models
 from rest_framework import generics, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
@@ -89,10 +90,19 @@ class ProductListView(generics.ListAPIView):
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset.annotate(price_adjusted=models.F('price'))
+
 
 class ProductDetailView(generics.RetrieveAPIView):
     queryset = Product.objects.all()
     serializer_class = ProductDetailSerializer
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context 
 
 
 class OrderView(generics.CreateAPIView):
