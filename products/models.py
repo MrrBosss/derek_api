@@ -60,8 +60,6 @@ class Brand(models.Model):
         return str(self.brands)
 
 
-from django.db import models
-
 class Category(models.Model):
     name = models.CharField(max_length=255)
     parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
@@ -92,10 +90,7 @@ class Team(models.Model):
 
 
 class ProductWeight(models.Model):
-    mass = models.IntegerField(default=0)
-
-    def __str__(self):
-        return f"{self.mass}g"
+    mass = models.IntegerField(default=0, null=True, blank=True)
 
 
 class Product(models.Model):

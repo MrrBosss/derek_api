@@ -76,10 +76,10 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'title', 'price', 'calculated_price', 'weights', 'artikul', 'category', 'stock','description']
+        fields = ['id', 'title', 'price', 'calculated_price','color','weights', 'artikul', 'category', 'stock','description']
 
     @extend_schema_field(serializers.FloatField)
-    def get_calculated_price(self, obj) -> float:
+    def get_calculated_price(self, obj):
         # Implement your custom price calculation logic here
         # For example, let's say the calculated price is price + 10% markup
         return obj.price * 1.1  # Adjust the logic as needed
