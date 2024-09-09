@@ -76,7 +76,8 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'title', 'price', 'calculated_price','color','weights', 'artikul', 'category', 'stock','description']
+        fields = ['id', 'title_ru','title_en', 'price', 'calculated_price','color','weights', 'artikul', 'category',\
+                   'stock','description_ru','description_en']
 
     @extend_schema_field(serializers.FloatField)
     def get_calculated_price(self, obj):

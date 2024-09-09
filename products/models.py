@@ -110,21 +110,6 @@ class Product(models.Model):
     ch_value = models.CharField(max_length=50, verbose_name='Xarakteristika qiymati', null=True, blank=True)
 
 
-    def calculate_price(self, selected_weight):
-        """
-        Calculate the price of the product based on the selected weight.
-        """
-        base_weight = 30  # Base weight in grams for the default price
-        base_price = self.price
-
-        # Calculate price per gram
-        price_per_gram = base_price / base_weight
-
-        # Adjust the price based on the selected weight
-        final_price = price_per_gram * selected_weight.mass
-
-        return round(final_price, 2)
-
     def get_absolute_url(self):
         return f"/api/products/{self.pk}/"
 
