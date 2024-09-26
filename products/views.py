@@ -17,7 +17,7 @@ from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, Bra
 from .serializers import ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer
 from .serializers import TeamSerializer, ProductDetailSerializer, BestSellerSerializer
 from .filters import ProductFilter
-from .utils import create_product, update_product, delete_product
+from .utils import create_or_update_product, delete_product
 
 
 class ProductWeightViewSet(viewsets.ModelViewSet):
@@ -169,18 +169,12 @@ class MoyskladProductAPIView(APIView):
             event = meta['type']
             action = request_data['events'][0]['action']  # product
             if event == EventMapper.PRODUCT:
-                if action == ActionMapper.CREATE:
+                if action in (ActionMapper.CREATE, ActionMapper.UPDATE):
                     url = meta['href']
                     response = requests.get(url,
                                             auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
                     if response.status_code == 200:
-                        create_product(response.json())
-                elif action == ActionMapper.UPDATE:
-                    url = meta['href']
-                    response = requests.get(url,
-                                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-                    if response.status_code == 200:
-                        update_product(response.json())
+                        create_or_update_product(response.json())
                 elif action == ActionMapper.DELETE:
                     url = meta['href']
                     parsed_url = urlparse(url)

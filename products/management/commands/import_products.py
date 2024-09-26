@@ -1,9 +1,10 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
+import time
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from products.utils import create_product
+from products.utils import create_or_update_product
 
 API_URL = "https://api.moysklad.ru/api/remap/1.2/entity/product"
 
@@ -18,7 +19,7 @@ def get_data(page):
 
 def parse_and_save_products(json_response):
     for item in json_response['rows']:
-        create_product(item)
+        create_or_update_product(item)
 
 
 class Command(BaseCommand):

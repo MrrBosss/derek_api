@@ -29,15 +29,24 @@ class OrderAdmin(admin.ModelAdmin):
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'category', 'stock', 'guid']
     search_fields = ['title']
+    list_filter = ['category']
+    autocomplete_fields = ('weight','color')
+    raw_id_fields = ('weight','color')
 
 
 admin.site.register(BestSeller)
 
 admin.site.register(Catalog)
 
-admin.site.register(ProductWeight)
+@admin.register(ProductWeight)
+class ProductWeightAdmin(admin.ModelAdmin):
+    list_display = ['mass']
+    search_fields = ['mass']
 
-admin.site.register(ProductColor)
+@admin.register(ProductColor)
+class ProductColorAdmin(admin.ModelAdmin):
+    list_display = ['name']
+    search_fields = ['name']
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

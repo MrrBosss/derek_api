@@ -33,7 +33,9 @@ class ProductManager(models.Manager):
 
 class ProductColor(models.Model):
     name = models.CharField(max_length=150)
-    color = models.CharField(max_length=60)
+
+    def __str__(self):
+        return str(self.name)
 
 
 class FAQ(models.Model):
@@ -90,7 +92,10 @@ class Team(models.Model):
 
 
 class ProductWeight(models.Model):
-    mass = models.IntegerField(default=0, null=True, blank=True)
+    mass = models.CharField(max_length=50, null=True, blank=True)
+
+    def __str__(self):
+        return str(self.mass)
 
 
 class Product(models.Model):
@@ -155,7 +160,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     color = models.CharField(max_length=20, null=True)
-    weight = models.IntegerField(null=True)
+    weight = models.CharField(max_length=50,null=True,blank=True)
     quantity = models.IntegerField(default=0)
 
     @property
