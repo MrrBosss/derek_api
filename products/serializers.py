@@ -52,7 +52,7 @@ class ProductSerializer(serializers.ModelSerializer):
 class ProductColorSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductColor
-        fields = ['id', 'name', 'color']
+        fields = ['id', 'name']
 
 
 class ProductWeightSerializer(serializers.ModelSerializer):
@@ -71,28 +71,13 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    calculated_price = serializers.SerializerMethodField()
     weights = ProductWeightSerializer(many=True, source='weight')
 
     class Meta:
         model = Product
-        fields = ['id', 'title_ru','title_en', 'price', 'calculated_price','color','weights', 'artikul', 'category',\
+        fields = ['id', 'title_ru','title_en', 'price','color','weights', 'artikul', 'category',\
                    'stock','description_ru','description_en']
 
-    @extend_schema_field(serializers.FloatField)
-    def get_calculated_price(self, obj):
-        # Implement your custom price calculation logic here
-        # For example, let's say the calculated price is price + 10% markup
-        return obj.price * 1.1  # Adjust the logic as needed
-
-    def get_calculated_price(self, obj):
-        request = self.context.get('request', None)
-        if request:
-            weight_id = request.query_params.get('weight_id', None)
-            if weight_id:
-                selected_weight = ProductWeight.objects.get(id=weight_id)
-                return obj.calculate_price(selected_weight)
-        return obj.price  # Return the base price if no weight is selected
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
