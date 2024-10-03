@@ -68,7 +68,6 @@ def create_or_update_product(item):
         title=name,
         defaults={
             'category': category,
-            'artikul': product_code,
             'public': True,
             'description': item.get('description', ''),  # Default to empty string if no description
 
@@ -87,12 +86,13 @@ def create_or_update_product(item):
     if product_weight and product_color:
         product_price_obj, _ = ProductPrice.objects.update_or_create(
             guid=product_guid,
-            weight=product_weight,
-            color=product_color,
-            extrernal_code=external_code,
             defaults={
+                'weight': product_weight,
+                'color': product_color,
                 'amount': product_price,
-                'stock': 0
+                'stock': 0,
+                'artikul': product_code,
+                'extrernal_code': external_code,
             }
         )
         # Associate the ProductPrice object with the product

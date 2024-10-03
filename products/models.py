@@ -106,6 +106,7 @@ class ProductPrice(models.Model):
     stock = models.IntegerField(verbose_name="Ostatka", default=0)
     guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     external_code = models.CharField(max_length=50, blank=True, null=True)
+    artikul = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"{self.weight}, {self.color}, amount: {self.amount}, stock: {self.stock}"
@@ -126,7 +127,7 @@ class Product(models.Model):
     public = models.BooleanField(default=True)
     image = models.ImageField(upload_to=get_image_upload_path, null=True, blank=True)
     price = models.ManyToManyField(ProductPrice)
-    artikul = models.CharField(max_length=20)
+    # artikul = models.CharField(max_length=20) # Migrate to ProductPrice
     # weight = models.ManyToManyField(ProductWeight)  # Migrate to ProductPrice
     # color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, null= True)  # Migrate to ProductPrice
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
