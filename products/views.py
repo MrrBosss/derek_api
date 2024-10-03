@@ -84,7 +84,7 @@ class CatalogList(generics.ListAPIView):
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(public=True).order_by("-stock")
+    queryset = Product.objects.filter(public=True).order_by("-price__stock")
     serializer_class = ProductSerializer
     http_method_names = ['get']
     filter_backends = [DjangoFilterBackend]

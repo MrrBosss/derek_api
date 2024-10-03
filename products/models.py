@@ -1,3 +1,4 @@
+import os
 import random
 import uuid
 
@@ -56,7 +57,7 @@ class Banner(models.Model):
 
 class Brand(models.Model):
     brands = models.ImageField(upload_to="products", null=True)
-    name = models.CharField(max_length=500, null=True,blank=True)
+    name = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return str(self.brands)
@@ -98,22 +99,40 @@ class ProductWeight(models.Model):
         return str(self.mass)
 
 
+class ProductPrice(models.Model):
+    weight = models.ForeignKey(ProductWeight, on_delete=models.CASCADE)
+    color = models.ForeignKey(ProductColor, on_delete=models.CASCADE)
+    amount = models.FloatField(default=100)
+    stock = models.IntegerField(verbose_name="Ostatka", default=0)
+    guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    external_code = models.CharField(max_length=50, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.weight}, {self.color}, amount: {self.amount}, stock: {self.stock}"
+
+
+def get_image_upload_path(instance, filename):
+    # Генерация пути для сохранения файла
+    category_name = instance.category.name if instance.category else 'default'
+    # Возвращаем путь в формате: category/имя_файла
+    return os.path.join(category_name, filename)
+
+
 class Product(models.Model):
     title = models.CharField(max_length=255, null=True)
-    guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
+    # guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Migrate to ProductPrice
     description = models.TextField(blank=True, null=True)
-    price = models.FloatField(default=100)
+    # price = models.FloatField(default=100)  # Migrate to ProductPrice
     public = models.BooleanField(default=True)
-    image = models.ImageField(upload_to="products", null=True, blank=True)
-    weight = models.ManyToManyField(ProductWeight)
-    color = models.ManyToManyField(ProductColor)
+    image = models.ImageField(upload_to=get_image_upload_path, null=True, blank=True)
+    price = models.ManyToManyField(ProductPrice)
     artikul = models.CharField(max_length=20)
-    # color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, null= True)
+    # weight = models.ManyToManyField(ProductWeight)  # Migrate to ProductPrice
+    # color = models.ForeignKey(ProductColor, on_delete=models.CASCADE, null= True)  # Migrate to ProductPrice
     category = models.ForeignKey(Category, on_delete=models.CASCADE, null=True)
-    stock = models.IntegerField(verbose_name="Ostatka", default=0)
+    # stock = models.IntegerField(verbose_name="Ostatka", default=0)  # Migrate to ProductPrice
     ch_name = models.CharField(max_length=50, verbose_name='Xarakteristika nomi', null=True, blank=True)
     ch_value = models.CharField(max_length=50, verbose_name='Xarakteristika qiymati', null=True, blank=True)
-
 
     def get_absolute_url(self):
         return f"/api/products/{self.pk}/"
@@ -147,7 +166,7 @@ class Product(models.Model):
 
 class BestSeller(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    
+
 
 class Order(models.Model):
     order_date = models.DateTimeField(auto_now_add=True, null=True)
@@ -160,7 +179,7 @@ class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
     color = models.CharField(max_length=20, null=True)
-    weight = models.CharField(max_length=50,null=True,blank=True)
+    weight = models.CharField(max_length=50, null=True, blank=True)
     quantity = models.IntegerField(default=0)
 
     @property

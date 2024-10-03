@@ -1,7 +1,6 @@
 import requests
 from requests.auth import HTTPBasicAuth
 
-import time
 from django.core.management.base import BaseCommand
 from django.conf import settings
 from products.utils import create_or_update_product
@@ -18,7 +17,7 @@ def get_data(page):
 
 
 def parse_and_save_products(json_response):
-    for item in json_response['rows']:
+    for num, item in enumerate(json_response['rows']):
         create_or_update_product(item)
 
 

@@ -3,7 +3,7 @@ from requests.auth import HTTPBasicAuth
 
 from django.core.management.base import BaseCommand
 from django.conf import settings
-from products.utils import create_product, update_stock
+from products.utils import update_stock
 
 API_URL = "https://api.moysklad.ru/api/remap/1.2/report/stock/all"
 
