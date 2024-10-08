@@ -2,11 +2,10 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.reverse import reverse
 
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog,\
-                    Order, OrderItem, Team, BestSeller, ProductPrice
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog, \
+    Order, OrderItem, Team, BestSeller, ProductPrice
 from . import validators
 from api.serializers import UserPublicSerializer
-
 
 
 class ProductInlineSerializer(serializers.Serializer):
@@ -15,39 +14,41 @@ class ProductInlineSerializer(serializers.Serializer):
         lookup_field='pk',
         read_only=True,
     )
-    title = serializers.CharField(read_only=True)   
+    title = serializers.CharField(read_only=True)
 
 
-class ProductSerializer(serializers.ModelSerializer):
-    owner = UserPublicSerializer(source="user",read_only=True)
-    title = serializers.CharField(validators=[validators.validate_title_no_hello,
-                                              validators.unique_product_title])
-    
-    body = serializers.CharField(source='content')
-    class Meta:
-        model = Product
-        fields = [
-            'owner',                         
-            'pk',
-            'title',
-            'body',
-            'price',
-            'sale_price',
-            'public',
-            'path',
-            'endpoint',
-        ]
-   
-    def get_my_user_data(self, obj):
-        return {
-            "username": obj.user.username
-        }
+# class ProductSerializer(serializers.ModelSerializer):
 
-    def get_edit_url(self, obj):
-        request = self.context.get('request')  #self.request
-        if request is None: 
-            return None
-        return reverse("product-edit", kwargs={"pk": obj.pk}, request=request)
+
+#     owner = UserPublicSerializer(source="user",read_only=True)
+#     title = serializers.CharField(validators=[validators.validate_title_no_hello,
+#                                               validators.unique_product_title])
+#
+#     body = serializers.CharField(source='content')
+#     class Meta:
+#         model = Product
+#         fields = [
+#             'owner',
+#             'pk',
+#             'title',
+#             'body',
+#             'price',
+#             'sale_price',
+#             'public',
+#             'path',
+#             'endpoint',
+#         ]
+#
+#     def get_my_user_data(self, obj):
+#         return {
+#             "username": obj.user.username
+#         }
+#
+#     def get_edit_url(self, obj):
+#         request = self.context.get('request')  #self.request
+#         if request is None:
+#             return None
+#         return reverse("product-edit", kwargs={"pk": obj.pk}, request=request)
 
 
 class ProductColorSerializer(serializers.ModelSerializer):
@@ -62,27 +63,43 @@ class ProductWeightSerializer(serializers.ModelSerializer):
         fields = ['id', 'mass']
 
 
-class ProductPriceSerializer(serializers.ModelSerializer):
+class ProductListPriceSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProductPrice
-        fields = ['id','weight','color','amount','stock','guid','external_code','artikul']
+        fields = ['id', 'amount', 'stock', 'guid', ]
+
+
+class ProductDetailPriceSerializer(serializers.ModelSerializer):
+    color = ProductColorSerializer(many=False, read_only=True)
+    weight = ProductWeightSerializer(many=False, read_only=True)
+
+    class Meta:
+        model = ProductPrice
+        fields = ['id', 'weight', 'color', 'amount', 'stock', 'guid', 'external_code', 'artikul']
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
-    price = ProductPriceSerializer(read_only=True,many=True)
- 
+    price = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = "__all__"
 
+    def get_price(self, obj) -> ProductDetailPriceSerializer(read_only=True, many=True):
+        prices = obj.price.all().order_by('-stock', 'amount')
+        return ProductDetailPriceSerializer(prices, many=True).data
+
 
 class ProductSerializer(serializers.ModelSerializer):
-    price = ProductPriceSerializer(read_only=True,many=True)
+    price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'title_ru','title_en', 'price','category','description_ru','description_en']
+        fields = ['id', 'title_ru', 'title_en', 'price', 'category', 'description_ru', 'description_en']
 
+    def get_price(self, obj) -> ProductListPriceSerializer(read_only=True, many=True):
+        prices = obj.price.all().select_related("weight", "color").order_by('-stock', 'amount')
+        return ProductListPriceSerializer(prices, many=True).data
 
 
 class SubcategorySerializer(serializers.ModelSerializer):
@@ -90,13 +107,14 @@ class SubcategorySerializer(serializers.ModelSerializer):
         model = Category
         fields = ['id', 'name']
 
+
 class CategorySerializer(serializers.ModelSerializer):
     subcategories = SubcategorySerializer(many=True, read_only=True)
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'parent', 'subcategories']
-    
+
 
 class FAQSerializer(serializers.ModelSerializer):
     class Meta:
@@ -114,7 +132,7 @@ class BrandSerializer(serializers.ModelSerializer):
     class Meta:
         model = Brand
         fields = "__all__"
-        
+
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
@@ -157,12 +175,12 @@ class TeamSerializer(serializers.ModelSerializer):
 class BestProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['title', 'image','description']
+        fields = ['title', 'image', 'description']
 
 
 class BestSellerSerializer(serializers.ModelSerializer):
     product_details = BestProductSerializer(source='product', read_only=True)
-    
+
     class Meta:
         model = BestSeller
-        fields = ['id', 'product', 'product_details'] 
+        fields = ['id', 'product', 'product_details']

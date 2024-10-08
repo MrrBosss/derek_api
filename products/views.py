@@ -12,11 +12,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response
 
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team,\
-                     BestSeller, ProductPrice
-from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer,\
-                        ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer, TeamSerializer,\
-                         ProductDetailSerializer, BestSellerSerializer, ProductPriceSerializer
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team, \
+    BestSeller, ProductPrice
+from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer, \
+    ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer, TeamSerializer, \
+    ProductDetailSerializer, BestSellerSerializer, ProductDetailPriceSerializer
 from .filters import ProductFilter
 from .utils import create_or_update_product, delete_product
 
@@ -86,32 +86,27 @@ class CatalogList(generics.ListAPIView):
 
 class ProductPriceViewSet(viewsets.ModelViewSet):
     queryset = ProductPrice.objects.all()
-    serializer_class = ProductPriceSerializer
+    serializer_class = ProductDetailPriceSerializer
     http_method_names = ['get']
     pagination_class = None
-    
 
 
 class ProductListView(generics.ListAPIView):
-    queryset = Product.objects.filter(public=True).order_by("-price__stock")
+    queryset = Product.objects.filter(public=True).prefetch_related("price")
     serializer_class = ProductSerializer
     http_method_names = ['get']
     filter_backends = [DjangoFilterBackend]
     filterset_class = ProductFilter
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        return queryset.annotate(price_adjusted=models.F('price'))
-
 
 class ProductDetailView(generics.RetrieveAPIView):
-    queryset = Product.objects.all()
+    queryset = Product.objects.all().prefetch_related("price")
     serializer_class = ProductDetailSerializer
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
-        return context 
+        return context
 
 
 class OrderView(generics.CreateAPIView):
