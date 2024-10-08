@@ -68,7 +68,7 @@ def create_or_update_product(item):
     # Create or get product weight
     # Create or get product
     product, created = Product.objects.update_or_create(
-        title=name,
+        title=name.strip(),
         defaults={
             'category': category,
             'public': True,
@@ -78,11 +78,11 @@ def create_or_update_product(item):
     )
     product_weight = None
     if weight_value:
-        product_weight, _ = ProductWeight.objects.get_or_create(mass=weight_value)
+        product_weight, _ = ProductWeight.objects.get_or_create(mass=weight_value.strip())
 
     product_color = None
     if color:
-        product_color, _ = ProductColor.objects.get_or_create(name=color)
+        product_color, _ = ProductColor.objects.get_or_create(name=color.strip())
 
     Product.objects.filter(title=product_name).delete()
 
