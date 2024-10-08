@@ -49,7 +49,7 @@ def extract_name_color_weight(product_name):
 # Function to create a product
 def create_or_update_product(item):
     product_name = item['name']  # e.g. "Product Name, Color, Weight"
-    if len(product_name.split(",")) < 2:
+    if len(product_name.split(",")) < 3:
         print("Product name is None.")
         return
     product_code = item['code']
