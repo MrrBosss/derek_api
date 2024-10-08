@@ -2,10 +2,11 @@ from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.reverse import reverse
 
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog# ProductList,
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog,\
+                    Order, OrderItem, Team, BestSeller, ProductPrice
 from . import validators
 from api.serializers import UserPublicSerializer
-from .models import Order, OrderItem, Team, BestSeller
+
 
 
 class ProductInlineSerializer(serializers.Serializer):
@@ -61,22 +62,26 @@ class ProductWeightSerializer(serializers.ModelSerializer):
         fields = ['id', 'mass']
 
 
+class ProductPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPrice
+        fields = ['id','weight','color','amount','stock','guid','external_code','artikul']
+
+
 class ProductDetailSerializer(serializers.ModelSerializer):
-    weight = ProductWeightSerializer(many=True, read_only=True)
-    color = ProductColorSerializer(many=True, read_only=True)
-    
+    price = ProductPriceSerializer(read_only=True,many=True)
+ 
     class Meta:
         model = Product
         fields = "__all__"
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    weights = ProductWeightSerializer(many=True, source='weight')
+    price = ProductPriceSerializer(read_only=True,many=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'title_ru','title_en', 'price','color','weights', 'artikul', 'category',\
-                   'stock','description_ru','description_en']
+        fields = ['id', 'title_ru','title_en', 'price','category','description_ru','description_en']
 
 
 

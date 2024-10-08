@@ -106,7 +106,7 @@ class ProductPrice(models.Model):
     stock = models.IntegerField(verbose_name="Ostatka", default=0)
     guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     external_code = models.CharField(max_length=50, blank=True, null=True)
-    artikul = models.CharField(max_length=20, blank=True, null=True)
+    artikul = models.CharField(verbose_name="artikul",max_length=20, blank=True, null=True)
 
     def __str__(self):
         return f"{self.weight}, {self.color}, amount: {self.amount}, stock: {self.stock}"

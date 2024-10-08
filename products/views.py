@@ -12,10 +12,11 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response
 
-from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team, BestSeller
-from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer
-from .serializers import ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer
-from .serializers import TeamSerializer, ProductDetailSerializer, BestSellerSerializer
+from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team,\
+                     BestSeller, ProductPrice
+from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer,\
+                        ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer, TeamSerializer,\
+                         ProductDetailSerializer, BestSellerSerializer, ProductPriceSerializer
 from .filters import ProductFilter
 from .utils import create_or_update_product, delete_product
 
@@ -81,6 +82,14 @@ class CatalogList(generics.ListAPIView):
     serializer_class = CatalogSerializer
     http_method_names = ['get']
     pagination_class = None
+
+
+class ProductPriceViewSet(viewsets.ModelViewSet):
+    queryset = ProductPrice.objects.all()
+    serializer_class = ProductPriceSerializer
+    http_method_names = ['get']
+    pagination_class = None
+    
 
 
 class ProductListView(generics.ListAPIView):
