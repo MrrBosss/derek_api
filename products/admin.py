@@ -11,14 +11,13 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'order_date', 'get_total_quantity']
+    list_display = ['id', 'product' 'order_date', 'get_total_quantity']
     inlines = [OrderItemInline]
 
     def get_total_quantity(self, obj):
         return sum(item.quantity for item in obj.items.all())
 
     get_total_quantity.short_description = 'Total Quantity'
-
 
 
 @admin.register(Product)
