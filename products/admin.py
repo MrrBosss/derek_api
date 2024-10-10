@@ -11,7 +11,7 @@ class OrderItemInline(admin.TabularInline):
 
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
-    list_display = ['id', 'order_date', 'get_total_quantity', 'get_total_price']
+    list_display = ['id', 'order_date', 'get_total_quantity']
     inlines = [OrderItemInline]
 
     def get_total_quantity(self, obj):
@@ -19,10 +19,6 @@ class OrderAdmin(admin.ModelAdmin):
 
     get_total_quantity.short_description = 'Total Quantity'
 
-    def get_total_price(self, obj):
-        return sum(item.subtotal for item in obj.items.all())
-
-    get_total_price.short_description = 'Total Price'
 
 
 @admin.register(Product)
