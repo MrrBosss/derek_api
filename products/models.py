@@ -183,10 +183,4 @@ class OrderItem(models.Model):
     weight = models.CharField(max_length=100, null=True, blank=True)
     quantity = models.IntegerField(default=0)
 
-    @property
-    def subtotal(self):
-        return self.quantity * self.product.price
 
-    @property
-    def total_price(self):
-        return sum(item.subtotal for item in self.order.items.all())
