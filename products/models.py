@@ -179,8 +179,8 @@ class Order(models.Model):
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, related_name='items', on_delete=models.CASCADE)
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    color = models.CharField(max_length=20, null=True)
-    weight = models.CharField(max_length=50, null=True, blank=True)
+    color = models.CharField(max_length=100, null=True)
+    weight = models.CharField(max_length=100, null=True, blank=True)
     quantity = models.IntegerField(default=0)
 
     @property
