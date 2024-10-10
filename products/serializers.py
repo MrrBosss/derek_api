@@ -64,9 +64,12 @@ class ProductWeightSerializer(serializers.ModelSerializer):
 
 
 class ProductListPriceSerializer(serializers.ModelSerializer):
+    color = ProductColorSerializer(many=False, read_only=True)
+    weight = ProductWeightSerializer(many=False, read_only=True)
+
     class Meta:
         model = ProductPrice
-        fields = ['id', 'amount', 'stock', 'guid', ]
+        fields = ['id', 'weight', 'color', 'amount', 'stock', 'guid', 'external_code', 'artikul']
 
 
 class ProductDetailPriceSerializer(serializers.ModelSerializer):
@@ -95,7 +98,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'title_ru', 'title_en', 'price', 'category', 'description_ru', 'description_en']
+        fields = ['id', 'title_ru', 'title_en', 'price', 'image','category', 'description_ru', 'description_en']
 
     def get_price(self, obj) -> ProductListPriceSerializer(read_only=True, many=True):
         prices = obj.price.all().select_related("weight", "color").order_by('-stock', 'amount')
