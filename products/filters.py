@@ -27,7 +27,6 @@ class ProductFilter(django_filters.FilterSet):
     weight = django_filters.ModelMultipleChoiceFilter(
         field_name='price__weight',  # Now filtering based on ProductPrice's weight
         queryset=ProductWeight.objects.all(),
-        widget=forms.Select(attrs={'onchange': 'this.form.submit();'}),
         label='Select Weight'
     )
 
