@@ -6,15 +6,12 @@ from requests.auth import HTTPBasicAuth
 from django.core.files.base import ContentFile
 
 from products.models import Category, ProductWeight, Product, ProductColor, ProductPrice
-from urllib.parse import urlparse
-
 
 # Function to get image data
 def get_images_data(url):
     response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
     response.raise_for_status()  # Raise an exception for unsuccessful requests
     return response.json()
-
 
 # Function to save the first image for a product
 def save_first_image(product: Product, images_request_url):
@@ -36,7 +33,6 @@ def save_first_image(product: Product, images_request_url):
     else:
         print("No images found.")
 
-
 # Function to extract name, color, and weight from product name
 def extract_name_color_weight(product_name):
     parts = product_name.split(', ')
@@ -45,18 +41,21 @@ def extract_name_color_weight(product_name):
     weight = parts[2] if len(parts) > 2 else None
     return name, color, weight
 
-
-# Function to create a product
+# Function to create or update a product
 def create_or_update_product(item):
     product_name = item['name']  # e.g. "Product Name, Color, Weight"
     if len(product_name.split(",")) < 3:
         print("Product name is None.")
         return
+
     product_code = item['code']
     product_guid = item['id']
     external_code = item['externalCode']
     product_price = item['salePrices'][0]['value'] / 100.0  # Convert price from kopecks to rubles
+    product_description = item.get('description', '')  # Retrieve description here
+
     images = item['images']['meta'] if 'images' in item else None
+
     # Create or get category
     category_name = item.get('pathName', 'Default Category')
     category, _created = Category.objects.get_or_create(name=category_name)
@@ -65,27 +64,29 @@ def create_or_update_product(item):
     name, color, weight_value = extract_name_color_weight(product_name)
     print(f"Extracted Name: {name}, Color: {color}, Weight: {weight_value}")  # Debug output
 
-    # Create or get product weight
     # Create or get product
-    product, created = Product.objects.update_or_create(
+    product, _ = Product.objects.update_or_create(
         title=name.strip(),
         defaults={
             'category': category,
             'public': True,
-            'description': item.get('description', ''),  # Default to empty string if no description
-
         }
     )
+
+    # Create or get product weight
     product_weight = None
     if weight_value:
         product_weight, _ = ProductWeight.objects.get_or_create(mass=weight_value.strip())
 
+    # Create or get product color
     product_color = None
     if color:
         product_color, _ = ProductColor.objects.get_or_create(name=color.strip())
 
+    # Delete old product instances with the same name
     Product.objects.filter(title=product_name).delete()
 
+    # Create or update product price with description
     if product_weight and product_color:
         product_price_obj, _ = ProductPrice.objects.update_or_create(
             guid=product_guid,
@@ -96,18 +97,19 @@ def create_or_update_product(item):
                 'stock': 0,
                 'artikul': product_code,
                 'external_code': external_code,
+                'description': product_description,  # Save the description here
             }
         )
+
         # Associate the ProductPrice object with the product
         product.price.add(product_price_obj)
 
     # Save the first image if available
-    if images['size'] > 0:
+    if images and images['size'] > 0:
         time.sleep(2)
         save_first_image(product, images['href'])
 
     print(f"Product '{name}' created or updated successfully!")
-
 
 # Function to delete a product
 def delete_product(product_id):
@@ -116,7 +118,6 @@ def delete_product(product_id):
         product.public = False
         product.save()
         print(f"Product '{product.title}' marked as deleted.")
-
 
 # Function to update stock for a product
 def update_stock(data):
@@ -127,10 +128,11 @@ def update_stock(data):
     product_id = parsed_url.path.split('/')[-1]
 
     # Find the product by guid
-    product_weight_obj = ProductPrice.objects.filter(guid=product_id).first()
+    product_price_obj = ProductPrice.objects.filter(guid=product_id).first()
 
-    if product_weight_obj:
-        product_weight_obj.stock = int(stock)
-        product_weight_obj.save()
+    if product_price_obj:
+        product_price_obj.stock = int(stock)
+        product_price_obj.save()
 
         print(f"Stock for product {product_name} updated to {stock} for each ProductPrice.")
+

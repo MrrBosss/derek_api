@@ -106,6 +106,7 @@ class ProductPrice(models.Model):
     stock = models.IntegerField(verbose_name="Ostatka", default=0)
     guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     external_code = models.CharField(max_length=50, blank=True, null=True)
+    description = models.TextField(blank=True, null=True)
     artikul = models.CharField(verbose_name="artikul",max_length=20, blank=True, null=True)
 
     def __str__(self):
@@ -122,7 +123,7 @@ def get_image_upload_path(instance, filename):
 class Product(models.Model):
     title = models.CharField(max_length=255, null=True)
     # guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)  # Migrate to ProductPrice
-    description = models.TextField(blank=True, null=True)
+    # description = models.TextField(blank=True, null=True)
     # price = models.FloatField(default=100)  # Migrate to ProductPrice
     public = models.BooleanField(default=True)
     image = models.ImageField(upload_to=get_image_upload_path, null=True, blank=True)
