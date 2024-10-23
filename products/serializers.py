@@ -180,7 +180,7 @@ class TeamSerializer(serializers.ModelSerializer):
 class BestProductSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['title', 'image', 'description']
+        fields = ['title', 'image']
 
 
 class BestSellerSerializer(serializers.ModelSerializer):
