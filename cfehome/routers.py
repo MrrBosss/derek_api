@@ -5,19 +5,20 @@ from products.views import (
     MoyskladProductAPIView, MoyskladProductStockAPIView, ProductPriceViewSet
 )
 from products.views import (
-    ProductDetailView, ProductColorViewset, ProductListView, CategoryView, TeamListView, BestSellerListView
+    ProductDetailView, ProductColorViewset, ProductListView, CategoryListView, TeamListView, BestSellerListView
 )
 
 router = DefaultRouter()
 router.register('product-price', ProductPriceViewSet, basename='product-price')
 router.register('products-color', ProductColorViewset, basename='products-color')
 router.register('products-weight', ProductWeightViewSet, basename='products-weight')
-router.register('categories', CategoryView, basename='categories')
+# router.register('categories', CategoryView, basename='categories')
 router.register('faqs', FAQViewSet, basename='faqs')
 router.register('banners', BannerViewSet, basename='banners')
 router.register('brands', BrandViewSet, basename='brands')
 urlpatterns = router.urls
 urlpatterns += [
+    path('category-list/', CategoryListView.as_view(), name='category-list'),
     path('catalog-list/', CatalogList.as_view(), name='catalog-list'),
     path('orders/', OrderView.as_view(), name='orders'),
     path('products-list/', ProductListView.as_view(), name='products-list'),

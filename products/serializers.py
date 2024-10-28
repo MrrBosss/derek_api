@@ -17,39 +17,6 @@ class ProductInlineSerializer(serializers.Serializer):
     title = serializers.CharField(read_only=True)
 
 
-# class ProductSerializer(serializers.ModelSerializer):
-
-
-#     owner = UserPublicSerializer(source="user",read_only=True)
-#     title = serializers.CharField(validators=[validators.validate_title_no_hello,
-#                                               validators.unique_product_title])
-#
-#     body = serializers.CharField(source='content')
-#     class Meta:
-#         model = Product
-#         fields = [
-#             'owner',
-#             'pk',
-#             'title',
-#             'body',
-#             'price',
-#             'sale_price',
-#             'public',
-#             'path',
-#             'endpoint',
-#         ]
-#
-#     def get_my_user_data(self, obj):
-#         return {
-#             "username": obj.user.username
-#         }
-#
-#     def get_edit_url(self, obj):
-#         request = self.context.get('request')  #self.request
-#         if request is None:
-#             return None
-#         return reverse("product-edit", kwargs={"pk": obj.pk}, request=request)
-
 
 class ProductColorSerializer(serializers.ModelSerializer):
     class Meta:
@@ -107,18 +74,24 @@ class ProductSerializer(serializers.ModelSerializer):
         return ProductListPriceSerializer(prices, many=True).data
 
 
-class SubcategorySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Category
-        fields = ['id', 'name']
+# class SubcategorySerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Category
+#         fields = ['id', 'name']
 
 
 class CategorySerializer(serializers.ModelSerializer):
-    subcategories = SubcategorySerializer(many=True, read_only=True)
+    subcategories = serializers.SerializerMethodField()
 
     class Meta:
         model = Category
         fields = ['id', 'name', 'parent', 'subcategories']
+
+    def get_subcategories(self, obj):
+        # Use prefetching to optimize queries
+        subcategories = obj.subcategories.all()
+        return CategorySerializer(subcategories, many=True).data
+
 
 
 class FAQSerializer(serializers.ModelSerializer):

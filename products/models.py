@@ -65,21 +65,16 @@ class Brand(models.Model):
 
 class Category(models.Model):
     name = models.CharField(max_length=255)
-    parent = models.ForeignKey('self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories')
+    parent = models.ForeignKey(
+        'self', on_delete=models.CASCADE, null=True, blank=True, related_name='subcategories'
+    )
 
     class Meta:
-        verbose_name_plural = "Categories"
+        unique_together = ('name', 'parent')
 
     def __str__(self):
-        return self.name
-
-    def is_subcategory(self):
-        """Returns True if the category is a subcategory."""
-        return self.parent is not None
-
-    def get_subcategories(self):
-        """Returns a QuerySet of subcategories for the current category."""
-        return self.subcategories.all()
+        # Provide better string representation
+        return f"{self.parent} / {self.name}" if self.parent else self.name
 
 
 class Catalog(models.Model):

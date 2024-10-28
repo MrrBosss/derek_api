@@ -11,6 +11,7 @@ from rest_framework import generics, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Response
+from rest_framework.generics import ListAPIView
 
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team, \
     BestSeller, ProductPrice
@@ -35,8 +36,8 @@ class ProductColorViewset(viewsets.ModelViewSet):
     pagination_class = None
 
 
-class CategoryView(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+class CategoryListView(ListAPIView):
+    queryset = Category.objects.filter(parent=None)  # Only top-level categories
     serializer_class = CategorySerializer
     http_method_names = ['get']
     pagination_class = None

@@ -41,7 +41,7 @@ def extract_name_color_weight(product_name):
     weight = parts[2] if len(parts) > 2 else None
     return name, color, weight
 
-# Function to create or update a product
+
 def create_or_update_product(item):
     product_name = item['name']  # e.g. "Product Name, Color, Weight"
     if len(product_name.split(",")) < 3:
@@ -52,17 +52,17 @@ def create_or_update_product(item):
     product_guid = item['id']
     external_code = item['externalCode']
     product_price = item['salePrices'][0]['value'] / 100.0  # Convert price from kopecks to rubles
-    product_description = item.get('description', '')  # Retrieve description here
+    product_description = item.get('description', '')
 
     images = item['images']['meta'] if 'images' in item else None
 
-    # Create or get category
-    category_name = item.get('pathName', 'Default Category')
-    category, _created = Category.objects.get_or_create(name=category_name)
+    # Create or get hierarchical category
+    category_name_path = item.get('pathName', 'Default Category')
+    category = create_or_get_category_hierarchy(category_name_path)
 
     # Extract name, color, and weight
     name, color, weight_value = extract_name_color_weight(product_name)
-    print(f"Extracted Name: {name}, Color: {color}, Weight: {weight_value}")  # Debug output
+    print(f"Extracted Name: {name}, Color: {color}, Weight: {weight_value}")
 
     # Create or get product
     product, _ = Product.objects.update_or_create(
@@ -97,7 +97,7 @@ def create_or_update_product(item):
                 'stock': 0,
                 'artikul': product_code,
                 'external_code': external_code,
-                'description': product_description,  # Save the description here
+                'description': product_description,
             }
         )
 
@@ -111,7 +111,28 @@ def create_or_update_product(item):
 
     print(f"Product '{name}' created or updated successfully!")
 
-# Function to delete a product
+
+
+def create_or_get_category_hierarchy(category_path):
+    """
+    Create or retrieve categories by splitting on '/' and assigning correct parent-child relationships.
+    """
+    category_names = category_path.split('/')
+    parent = None
+
+    for name in category_names:
+        # Remove extra spaces and handle potential empty names
+        name = name.strip()
+        if not name:
+            continue
+
+        # Get or create the category, assigning the parent
+        category, _ = Category.objects.get_or_create(name=name, parent=parent)
+        parent = category  # Update parent for the next iteration
+
+    return parent  # Return the last child category
+
+
 def delete_product(product_id):
     product = Product.objects.filter(guid=product_id).first()
     if product:
