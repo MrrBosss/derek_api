@@ -39,10 +39,12 @@ class ProductPriceAdmin(admin.ModelAdmin):
     list_select_related = ['weight', 'color']
 
 
-admin.site.register(BestSeller)
+@admin.register(BestSeller)
+class BestSellerAdmin(admin.ModelAdmin):
+    list_display = ['id','product']
+    list_display_links = ['id','product']
 
 admin.site.register(Catalog)
-
 
 @admin.register(ProductWeight)
 class ProductWeightAdmin(admin.ModelAdmin):
@@ -67,6 +69,10 @@ admin.site.register(FAQ)
 
 admin.site.register(Banner)
 
-admin.site.register(Brand)
+@admin.register(Brand)
+class BrandAdmin(admin.ModelAdmin):
+    list_display = ['id','category','brands']
+    list_display_links = ['id','category']
+    search_fields = ['id']
 
 admin.site.register(Team)

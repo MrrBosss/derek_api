@@ -107,9 +107,11 @@ class BannerSerializer(serializers.ModelSerializer):
 
 
 class BrandSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(many=False,read_only=True)
+    
     class Meta:
         model = Brand
-        fields = "__all__"
+        fields = ['category','brands']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -150,15 +152,22 @@ class TeamSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class BestProductSerializer(serializers.ModelSerializer):
+class BestProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['title', 'image']
+        fields = ['id', 'title_ru', 'title_en','image']  # Include all desired fields from Product
+
+
+class ProductPriceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductPrice
+        fields = ['description_ru', 'description_en','id']  # Include relevant fields from ProductPrice
 
 
 class BestSellerSerializer(serializers.ModelSerializer):
-    product_details = BestProductSerializer(source='product', read_only=True)
+    product = BestProductDetailSerializer(read_only=True)  # Serialize the Product properties
+    product_price = ProductPriceSerializer(source='product.price', many=True, read_only=True)  # Assuming you want all related prices
 
     class Meta:
         model = BestSeller
-        fields = ['id', 'product', 'product_details']
+        fields = ['id', 'product', 'product_price']  # Include Product and ProductPrice details

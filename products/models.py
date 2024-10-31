@@ -55,14 +55,6 @@ class Banner(models.Model):
     link = models.CharField(max_length=250, null=True)
 
 
-class Brand(models.Model):
-    brands = models.ImageField(upload_to="products", null=True)
-    name = models.CharField(max_length=500, null=True, blank=True)
-
-    def __str__(self):
-        return str(self.brands)
-
-
 class Category(models.Model):
     name = models.CharField(max_length=255)
     parent = models.ForeignKey(
@@ -75,6 +67,15 @@ class Category(models.Model):
     def __str__(self):
         # Provide better string representation
         return f"{self.parent} / {self.name}" if self.parent else self.name
+
+
+class Brand(models.Model):
+    brands = models.ImageField(upload_to="products", null=True)
+    name = models.CharField(max_length=500, null=True, blank=True)
+    category = models.ForeignKey(Category,on_delete=models.CASCADE,null=True,blank=True)
+
+    def __str__(self):
+        return str(self.brands)
 
 
 class Catalog(models.Model):
@@ -163,6 +164,10 @@ class Product(models.Model):
 
 class BestSeller(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    # product_price = models.ManyToManyField(ProductPrice)
+
+    def __str__(self):
+        return str(self.product)
 
 
 class Order(models.Model):
