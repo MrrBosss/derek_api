@@ -187,6 +187,7 @@ MODELTRANSLATION_TRANSLATION_FILES = (
     'products.translations',
 )
 
+MEDIA_URL = '/media/'
 MEDIA_ROOT = "media/"
 CORS_ALLOW_HEADERS = [
     'content-disposition',

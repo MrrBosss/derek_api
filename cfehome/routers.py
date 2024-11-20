@@ -2,13 +2,14 @@ from rest_framework.routers import DefaultRouter
 from django.urls import path
 from products.views import (
     FAQViewSet, BrandViewSet, BannerViewSet, ProductWeightViewSet, OrderView, CatalogList,
-    MoyskladProductAPIView, MoyskladProductStockAPIView, ProductPriceViewSet
+    MoyskladProductAPIView, MoyskladProductStockAPIView, ProductPriceViewSet, ProductShotsViewSet
 )
 from products.views import (
     ProductDetailView, ProductColorViewset, ProductListView, CategoryListView, TeamListView, BestSellerListView
 )
 
 router = DefaultRouter()
+router.register('product-shots', ProductShotsViewSet, basename='product-shots')
 router.register('product-price', ProductPriceViewSet, basename='product-price')
 router.register('products-color', ProductColorViewset, basename='products-color')
 router.register('products-weight', ProductWeightViewSet, basename='products-weight')

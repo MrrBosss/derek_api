@@ -3,7 +3,7 @@ from drf_spectacular.utils import extend_schema_field
 from rest_framework.reverse import reverse
 
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog, \
-    Order, OrderItem, Team, BestSeller, ProductPrice
+    Order, OrderItem, Team, BestSeller, ProductPrice, ProductShots
 from . import validators
 from api.serializers import UserPublicSerializer
 
@@ -16,6 +16,11 @@ class ProductInlineSerializer(serializers.Serializer):
     )
     title = serializers.CharField(read_only=True)
 
+
+class ProductShotsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductShots
+        fields = "__all__"
 
 
 class ProductColorSerializer(serializers.ModelSerializer):
@@ -51,6 +56,7 @@ class ProductDetailPriceSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
+    product_shots = ProductShotsSerializer(many=True)
     price = serializers.SerializerMethodField()
 
     class Meta:
@@ -63,11 +69,12 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
+    product_shots = ProductShotsSerializer(many=True)
     price = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
-        fields = ['id', 'title_ru', 'title_en', 'price', 'image','category']
+        fields = ['id', 'title_ru', 'title_en', 'price','product_shots','category']
 
     def get_price(self, obj) -> ProductListPriceSerializer(read_only=True, many=True):
         prices = obj.price.all().select_related("weight", "color").order_by('-stock', 'amount')
@@ -153,9 +160,10 @@ class TeamSerializer(serializers.ModelSerializer):
 
 
 class BestProductDetailSerializer(serializers.ModelSerializer):
+    product_shots = ProductShotsSerializer(many=True)
     class Meta:
         model = Product
-        fields = ['id', 'title_ru', 'title_en','image']  # Include all desired fields from Product
+        fields = ['id', 'title_ru', 'title_en','product_shots']  # Include all desired fields from Product
 
 
 class ProductPriceSerializer(serializers.ModelSerializer):

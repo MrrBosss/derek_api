@@ -4,34 +4,45 @@ import requests
 from django.conf import settings
 from requests.auth import HTTPBasicAuth
 from django.core.files.base import ContentFile
-
 from products.models import Category, ProductWeight, Product, ProductColor, ProductPrice
 
 # Function to get image data
 def get_images_data(url):
-    response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-    response.raise_for_status()  # Raise an exception for unsuccessful requests
-    return response.json()
+    try:
+        response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+        response.raise_for_status()  # Raise an exception for unsuccessful requests
+        return response.json()
+    except requests.RequestException as e:
+        print(f"Error fetching images data: {e}")
+        return None
 
-# Function to save the first image for a product
-def save_first_image(product: Product, images_request_url):
+# Function to save images for a product
+def save_images(product, images_request_url):
     images_data = get_images_data(images_request_url)
-    if images_data['rows']:
-        first_image_meta = images_data['rows'][0]['meta']['downloadHref']
-        image_response = requests.get(first_image_meta, auth=HTTPBasicAuth(
-            settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-        image_response.raise_for_status()  # Raise an exception if the request is unsuccessful
+    if images_data and images_data.get('rows'):
+        for i, image_meta in enumerate(images_data['rows']):
+            download_href = image_meta['meta']['downloadHref']
+            try:
+                # Attempt to download the image
+                image_response = requests.get(download_href, auth=HTTPBasicAuth(
+                    settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+                image_response.raise_for_status()  # Raise an exception if the request is unsuccessfull
 
-        image_content = ContentFile(image_response.content)
+                # Prepare image content
+                image_content = ContentFile(image_response.content)
 
-        # Generate a file name for the image
-        image_name = f"{product.id}_image.jpg"
+                # Save the image to the ProductShots model
+                product.product_shots.create(image=image_content)
+                print(f"Image {i + 1} saved successfully to ProductShots for product {product.title}!")
 
-        # Save the image to the product
-        product.image.save(image_name, image_content, save=True)
-        print("Image saved successfully!")
+                print("Image Content:", image_content)
+
+            except requests.RequestException as e:
+                print(f"Error downloading image {i + 1}: {e}")
+                continue  # Skip to the next image if an error occurs
     else:
         print("No images found.")
+
 
 # Function to extract name, color, and weight from product name
 def extract_name_color_weight(product_name):
@@ -41,11 +52,10 @@ def extract_name_color_weight(product_name):
     weight = parts[2] if len(parts) > 2 else None
     return name, color, weight
 
-
 def create_or_update_product(item):
     product_name = item['name']  # e.g. "Product Name, Color, Weight"
     if len(product_name.split(",")) < 3:
-        print("Product name is None.")
+        print("Product name is invalid or incomplete.")
         return
 
     product_code = item['code']
@@ -83,9 +93,6 @@ def create_or_update_product(item):
     if color:
         product_color, _ = ProductColor.objects.get_or_create(name=color.strip())
 
-    # Delete old product instances with the same name
-    Product.objects.filter(title=product_name).delete()
-
     # Create or update product price with description
     if product_weight and product_color:
         product_price_obj, _ = ProductPrice.objects.update_or_create(
@@ -105,33 +112,25 @@ def create_or_update_product(item):
         product.price.add(product_price_obj)
 
     # Save the first image if available
-    if images and images['size'] > 0:
+    if images and images.get('size', 0) > 0:
         time.sleep(2)
-        save_first_image(product, images['href'])
+        save_images(product, images['href'])
 
     print(f"Product '{name}' created or updated successfully!")
 
-
-
 def create_or_get_category_hierarchy(category_path):
-    """
-    Create or retrieve categories by splitting on '/' and assigning correct parent-child relationships.
-    """
     category_names = category_path.split('/')
     parent = None
 
     for name in category_names:
-        # Remove extra spaces and handle potential empty names
         name = name.strip()
         if not name:
             continue
 
-        # Get or create the category, assigning the parent
         category, _ = Category.objects.get_or_create(name=name, parent=parent)
         parent = category  # Update parent for the next iteration
 
     return parent  # Return the last child category
-
 
 def delete_product(product_id):
     product = Product.objects.filter(guid=product_id).first()
@@ -148,12 +147,14 @@ def update_stock(data):
     parsed_url = urlparse(product_url)
     product_id = parsed_url.path.split('/')[-1]
 
-    # Find the product by guid
+    # Find the product price by guid
     product_price_obj = ProductPrice.objects.filter(guid=product_id).first()
 
     if product_price_obj:
         product_price_obj.stock = int(stock)
         product_price_obj.save()
-
         print(f"Stock for product {product_name} updated to {stock} for each ProductPrice.")
+    else:
+        print(f"No product price found for guid {product_id}.")
+
 

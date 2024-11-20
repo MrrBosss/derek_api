@@ -110,10 +110,10 @@ class ProductPrice(models.Model):
 
 
 def get_image_upload_path(instance, filename):
-    # Генерация пути для сохранения файла
-    category_name = instance.category.name if instance.category else 'default'
-    # Возвращаем путь в формате: category/имя_файла
-    return os.path.join(category_name, filename)
+    # Access category through the related Product model
+    product = instance.product  # Adjust this line if your field name is different
+    category_name = product.category.name if product.category else 'default_category'
+    return f"product_images/{category_name}/{filename}"
 
 
 class Product(models.Model):
@@ -122,7 +122,6 @@ class Product(models.Model):
     # description = models.TextField(blank=True, null=True)
     # price = models.FloatField(default=100)  # Migrate to ProductPrice
     public = models.BooleanField(default=True)
-    image = models.ImageField(upload_to=get_image_upload_path, null=True, blank=True)
     price = models.ManyToManyField(ProductPrice)
     # artikul = models.CharField(max_length=20) # Migrate to ProductPrice
     # weight = models.ManyToManyField(ProductWeight)  # Migrate to ProductPrice
@@ -160,11 +159,18 @@ class Product(models.Model):
         products = products.order_by('group__sequence', 'title')
 
         return products
+    
+class ProductShots(models.Model):
+    product = models.ForeignKey(Product,on_delete=models.CASCADE,related_name='product_shots',null=True,blank=True)
+    image = models.ImageField(upload_to=get_image_upload_path,null=True)
+    created_at = models.DateTimeField(auto_now_add=True,null=True)
+
+    def __str__(self):
+        return f"Shot for {self.product.title}"
 
 
 class BestSeller(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    # product_price = models.ManyToManyField(ProductPrice)
 
     def __str__(self):
         return str(self.product)

@@ -14,12 +14,19 @@ from rest_framework.views import APIView, Response
 from rest_framework.generics import ListAPIView
 
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Order, Catalog, Team, \
-    BestSeller, ProductPrice
+    BestSeller, ProductPrice,ProductShots
 from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, BrandSerializer, ProductWeightSerializer, \
     ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer, TeamSerializer, \
-    ProductDetailSerializer, BestSellerSerializer, ProductDetailPriceSerializer
+    ProductDetailSerializer, BestSellerSerializer, ProductDetailPriceSerializer, ProductShotsSerializer
 from .filters import ProductFilter
 from .utils import create_or_update_product, delete_product
+
+
+class ProductShotsViewSet(viewsets.ModelViewSet):
+    queryset = ProductShots.objects.all()
+    serializer_class = ProductShotsSerializer
+    http_method_names = ['get']
+    pagination_class = None
 
 
 class ProductWeightViewSet(viewsets.ModelViewSet):

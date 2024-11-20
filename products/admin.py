@@ -1,7 +1,7 @@
 # Register your models here.
 from django.contrib import admin
 from .models import Product, ProductWeight, FAQ, Banner, Brand, Category, Order, ProductPrice
-from .models import ProductColor, Catalog, OrderItem, Team, BestSeller
+from .models import ProductColor, Catalog, OrderItem, Team, BestSeller, ProductShots
 
 
 class OrderItemInline(admin.TabularInline):
@@ -21,6 +21,10 @@ class OrderAdmin(admin.ModelAdmin):
     get_total_quantity.short_description = 'Total Quantity'
 
 
+class ProductShotsInline(admin.TabularInline):
+    model = ProductShots
+    extra = 0
+
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
     list_display = ['title', 'category',]
@@ -28,6 +32,7 @@ class ProductAdmin(admin.ModelAdmin):
     list_filter = ['category']
     autocomplete_fields = ('price',)
     raw_id_fields = ('price',)
+    inlines = [ProductShotsInline]
 
 
 @admin.register(ProductPrice)
