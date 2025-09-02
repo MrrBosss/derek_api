@@ -176,6 +176,7 @@ class ActionMapper:
 class MoyskladProductAPIView(APIView):
     def post(self, request):
         request_data = request.data
+        print(request_data)
         try:
             meta = request_data['events'][0]['meta']  # product
             event = meta['type']
@@ -185,6 +186,7 @@ class MoyskladProductAPIView(APIView):
                     url = meta['href']
                     response = requests.get(url,
                                             auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
+                    print(response.status_code)
                     if response.status_code == 200:
                         create_or_update_product(response.json())
                 elif action == ActionMapper.DELETE:
@@ -212,6 +214,7 @@ class MoyskladProductAPIView(APIView):
 class MoyskladProductStockAPIView(APIView):
     def post(self, request):
         request_data = request.data
+        print(request_data)
         try:
             for stock in request_data:
                 product_id = stock['assortmentId']
