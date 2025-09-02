@@ -1,11 +1,15 @@
 from rest_framework import serializers
 from drf_spectacular.utils import extend_schema_field
 from rest_framework.reverse import reverse
+import logging
 
 from .models import Product, FAQ, Banner, Brand, ProductWeight, ProductColor, Category, Catalog, \
     Order, OrderItem, Team, BestSeller, ProductPrice, ProductShots
 from . import validators
 from api.serializers import UserPublicSerializer
+from .telegram_service import telegram_service
+
+logger = logging.getLogger(__name__)
 
 
 class ProductInlineSerializer(serializers.Serializer):
@@ -142,8 +146,56 @@ class OrderSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         items_data = validated_data.pop('items')
         order = Order.objects.create(**validated_data)
+        
+        # Create order items and collect product information
+        order_items_with_details = []
         for item_data in items_data:
-            OrderItem.objects.create(order=order, **item_data)
+            order_item = OrderItem.objects.create(order=order, **item_data)
+            
+            # Get product details for notification
+            product = order_item.product
+            
+            # Try to get price information from ProductPrice
+            product_price = None
+            try:
+                # Find matching ProductPrice based on color and weight
+                price_query = product.price.all()
+                if order_item.color:
+                    price_query = price_query.filter(color__name=order_item.color)
+                if order_item.weight:
+                    price_query = price_query.filter(weight__mass=order_item.weight)
+                
+                product_price = price_query.first()
+            except Exception as e:
+                logger.warning(f"Could not get price for product {product.id}: {str(e)}")
+            
+            item_details = {
+                'product_name': product.title,
+                'color': order_item.color or 'Не указан',
+                'weight': order_item.weight or 'Не указан',
+                'quantity': order_item.quantity,
+                'price': product_price.amount if product_price else 0
+            }
+            order_items_with_details.append(item_details)
+        
+        # Send Telegram notification
+        try:
+            order_data = {
+                'id': order.id,
+                'name': order.name,
+                'phone_number': order.phone_number,
+                'order_date': order.order_date.strftime('%d.%m.%Y %H:%M') if order.order_date else 'Не указана',
+                'items': order_items_with_details
+            }
+            
+            # Send notification asynchronously (non-blocking)
+            telegram_service.send_sale_notification(order_data)
+            logger.info(f"Telegram notification sent for order {order.id}")
+            
+        except Exception as e:
+            logger.error(f"Failed to send Telegram notification for order {order.id}: {str(e)}")
+            # Don't fail the order creation if notification fails
+        
         return order
 
 
