@@ -6,45 +6,41 @@ from requests.auth import HTTPBasicAuth
 from django.core.files.base import ContentFile
 from products.models import Category, ProductWeight, Product, ProductColor, ProductPrice
 
-# Function to get image data
 def get_images_data(url):
     try:
-        response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-        response.raise_for_status()  # Raise an exception for unsuccessful requests
+        response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD), timeout=60)
+        response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
         print(f"Error fetching images data: {e}")
         return None
 
-# Function to save images for a product
 def save_images(product, images_request_url):
     images_data = get_images_data(images_request_url)
     if images_data and images_data.get('rows'):
         for i, image_meta in enumerate(images_data['rows']):
-            download_href = image_meta['meta']['downloadHref']
+            download_href = image_meta['meta'].get('downloadHref')
+            if not download_href:
+                print(f"Image meta without downloadHref at index {i}")
+                continue
             try:
-                # Attempt to download the image
-                image_response = requests.get(download_href, auth=HTTPBasicAuth(
-                    settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-                image_response.raise_for_status()  # Raise an exception if the request is unsuccessfull
-
-                # Prepare image content
+                image_response = requests.get(
+                    download_href,
+                    auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
+                    timeout=120
+                )
+                image_response.raise_for_status()
                 image_content = ContentFile(image_response.content)
-
-                # Save the image to the ProductShots model
+                # Желательно дать имя файлу (если ваша модель ожидает):
+                # product.product_shots.create(image=ImageFile(image_content, name=f"{product.pk}_{i}.jpg"))
                 product.product_shots.create(image=image_content)
-                print(f"Image {i + 1} saved successfully to ProductShots for product {product.title}!")
-
-                print("Image Content:", image_content)
-
+                print(f"Image {i + 1} saved successfully for product {product.title}!")
             except requests.RequestException as e:
                 print(f"Error downloading image {i + 1}: {e}")
-                continue  # Skip to the next image if an error occurs
+                continue
     else:
         print("No images found.")
 
-
-# Function to extract name, color, and weight from product name
 def extract_name_color_weight(product_name):
     parts = product_name.split(', ')
     name = parts[0] if len(parts) > 0 else ''
@@ -52,109 +48,122 @@ def extract_name_color_weight(product_name):
     weight = parts[2] if len(parts) > 2 else None
     return name, color, weight
 
-def create_or_update_product(item):
-    product_name = item['name']  # e.g. "Product Name, Color, Weight"
-    if len(product_name.split(",")) < 3:
-        print(f"Product: {product_name} is invalid or incomplete.")
-        return
+def create_or_update_product(item) -> bool:
+    """
+    Возвращает True, если товар/цена успешно обработаны (создана/обновлена ProductPrice),
+    False — если некорректные данные/пропуски и т.п.
+    Исключения наружу не бросаем — команда их перехватит и посчитает как ошибки.
+    """
+    try:
+        product_name = item.get('name') or ''
+        if len(product_name.split(",")) < 3:
+            print(f"Product: {product_name} is invalid or incomplete.")
+            return False
 
-    product_code = item['code']
-    product_guid = item['id']
-    external_code = item['externalCode']
-    product_price = item['salePrices'][0]['value'] / 100.0  # Convert price from kopecks to rubles
-    product_description = item.get('description', '')
+        product_code = item.get('code')
+        product_guid = item.get('id')
+        external_code = item.get('externalCode')
+        sale_prices = item.get('salePrices') or []
+        if not sale_prices or not sale_prices[0].get('value'):
+            print(f"Product: {product_name} has no salePrices.")
+            return False
 
-    images = item['images']['meta'] if 'images' in item else None
+        product_price = sale_prices[0]['value'] / 100.0
+        product_description = item.get('description', '')
 
-    # Create or get hierarchical category
-    category_name_path = item.get('pathName', 'Default Category')
-    category = create_or_get_category_hierarchy(category_name_path)
+        images = item.get('images', {}).get('meta')
 
-    # Extract name, color, and weight
-    name, color, weight_value = extract_name_color_weight(product_name)
-    print(f"Extracted Name: {name}, Color: {color}, Weight: {weight_value}")
+        # Category
+        category_name_path = item.get('pathName', 'Default Category')
+        category = create_or_get_category_hierarchy(category_name_path)
 
-    # Create or get product
-    product, _ = Product.objects.update_or_create(
-        title=name.strip(),
-        defaults={
-            'category': category,
-            'public': True,
-        }
-    )
+        # Parse name/color/weight
+        name, color, weight_value = extract_name_color_weight(product_name)
+        # print(f"Extracted Name: {name}, Color: {color}, Weight: {weight_value}")
 
-    # Create or get product weight
-    product_weight = None
-    if weight_value:
-        product_weight, _ = ProductWeight.objects.get_or_create(mass=weight_value.strip())
-
-    # Create or get product color
-    product_color = None
-    if color:
-        product_color, _ = ProductColor.objects.get_or_create(name=color.strip())
-
-    # Create or update product price with description
-    if product_weight and product_color:
-        product_price_obj, _ = ProductPrice.objects.update_or_create(
-            guid=product_guid,
+        # Product
+        product, _ = Product.objects.update_or_create(
+            title=name.strip(),
             defaults={
-                'weight': product_weight,
-                'color': product_color,
-                'amount': product_price,
-                'stock': 0,
-                'artikul': product_code,
-                'external_code': external_code,
-                'description': product_description,
+                'category': category,
+                'public': True,
             }
         )
 
-        # Associate the ProductPrice object with the product
-        product.price.add(product_price_obj)
+        # Weight
+        product_weight = None
+        if weight_value:
+            product_weight, _ = ProductWeight.objects.get_or_create(mass=weight_value.strip())
 
-    # Save the first image if available
-    if images and images.get('size', 0) > 0:
-        time.sleep(2)
-        save_images(product, images['href'])
+        # Color
+        product_color = None
+        if color:
+            product_color, _ = ProductColor.objects.get_or_create(name=color.strip())
 
-    print(f"Product '{name}' created or updated successfully!")
+        # Price
+        created_or_updated_price = False
+        if product_weight and product_color and product_guid:
+            product_price_obj, _ = ProductPrice.objects.update_or_create(
+                guid=product_guid,
+                defaults={
+                    'weight': product_weight,
+                    'color': product_color,
+                    'amount': product_price,
+                    'stock': 0,
+                    'artikul': product_code,
+                    'external_code': external_code,
+                    'description': product_description,
+                }
+            )
+            product.price.add(product_price_obj)
+            created_or_updated_price = True
+        else:
+            print(f"Skip price: guid/weight/color missing for product '{name}'")
+
+        # Images (не критично — ошибки не должны валить импорт)
+        if images and images.get('size', 0) > 0:
+            time.sleep(2)
+            save_images(product, images['href'])
+
+        print(f"Product '{name}' processed.")
+        return bool(created_or_updated_price)
+
+    except Exception as e:
+        # Не пробрасываем — пусть команда решит, как считать
+        print(f"Unexpected error in create_or_update_product: {e}")
+        return False
 
 def create_or_get_category_hierarchy(category_path):
     category_names = category_path.split('/')
     parent = None
-
     for name in category_names:
         name = name.strip()
         if not name:
             continue
-
         category, _ = Category.objects.get_or_create(name=name, parent=parent)
-        parent = category  # Update parent for the next iteration
-
-    return parent  # Return the last child category
+        parent = category
+    return parent
 
 def delete_product(product_id):
+    from products.models import Product  # локальный импорт на всякий
     product = Product.objects.filter(guid=product_id).first()
     if product:
         product.public = False
         product.save()
         print(f"Product '{product.title}' marked as deleted.")
 
-# Function to update stock for a product
 def update_stock(data):
+    from products.models import ProductPrice  # локальный импорт на всякий
     product_url = data['meta']['href']
     product_name = data['name']
-    stock = data.get('stock', 0)  # Get stock value, default to 0 if not found
+    stock = data.get('stock', 0)
     parsed_url = urlparse(product_url)
     product_id = parsed_url.path.split('/')[-1]
-
-    # Find the product price by guid
     product_price_obj = ProductPrice.objects.filter(guid=product_id).first()
-
     if product_price_obj:
         product_price_obj.stock = int(stock)
         product_price_obj.save()
-        print(f"Stock for product {product_name} updated to {stock} for each ProductPrice.")
+        print(f"Stock for product {product_name} updated to {stock}.")
     else:
         print(f"No product price found for guid {product_id}.")
-
 
