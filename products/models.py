@@ -33,7 +33,7 @@ class ProductManager(models.Manager):
 
 
 class ProductColor(models.Model):
-    name = models.CharField(max_length=150)
+    name = models.CharField(max_length=500)
 
     def __str__(self):
         return str(self.name)
@@ -89,7 +89,7 @@ class Team(models.Model):
 
 
 class ProductWeight(models.Model):
-    mass = models.CharField(max_length=50, null=True, blank=True)
+    mass = models.CharField(max_length=500, null=True, blank=True)
 
     def __str__(self):
         return str(self.mass)
@@ -101,9 +101,9 @@ class ProductPrice(models.Model):
     amount = models.FloatField(default=100)
     stock = models.IntegerField(verbose_name="Ostatka", default=0)
     guid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    external_code = models.CharField(max_length=50, blank=True, null=True)
+    external_code = models.CharField(max_length=500, blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    artikul = models.CharField(verbose_name="artikul",max_length=20, blank=True, null=True)
+    artikul = models.CharField(verbose_name="artikul",max_length=200, blank=True, null=True)
 
     def __str__(self):
         return f"{self.weight}, {self.color}, amount: {self.amount}, stock: {self.stock}"
