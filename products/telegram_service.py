@@ -111,15 +111,15 @@ class TelegramService:
                 f"    🎨 Цвет: {color}",
                 f"    ⚖️ Вес: {weight}",
                 f"    📦 Количество: {quantity}",
-                f"    💰 Цена: {price:,.0f} сум",
-                f"    💵 Сумма: {item_total:,.0f} сум",
+                f"    💰 Цена: {price:,.0f} $",
+                f"    💵 Сумма: {item_total:,.0f} $",
                 ""
             ]
             message_lines.extend(item_lines)
         
         # Add total amount
         message_lines.extend([
-            f"💎 <b>ОБЩАЯ СУММА: {total_amount:,.0f} сум</b>",
+            f"💎 <b>ОБЩАЯ СУММА: {total_amount:,.0f} $</b>",
             "",
             "✅ Обработайте заказ в кратчайшие сроки!"
         ])
