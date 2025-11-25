@@ -3,24 +3,21 @@ import io
 import sys
 from datetime import datetime
 
-import requests
-from requests.auth import HTTPBasicAuth
-
 from django.core.mail import EmailMessage
-from django.core.management.base import BaseCommand
+from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
+
+from products.moysklad_client import moysklad_client, MoyskladClientError
 
 API_URL = "https://api.moysklad.ru/api/remap/1.2/entity/product"
 
 
 def fetch_page(page: int, limit: int):
-    resp = requests.get(
-        f"{API_URL}?limit={limit}&offset={page * limit}",
-        auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
-        timeout=60,
-    )
-    resp.raise_for_status()
-    return resp.json()
+    params = {
+        "limit": limit,
+        "offset": page * limit,
+    }
+    return moysklad_client.get_json(API_URL, params=params)
 
 
 def classify_issue(item):
@@ -156,6 +153,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         limit = options["limit"]
+        if limit > 1000:
+            raise CommandError("Moysklad API does not allow limit > 1000.")
         page = options["start_page"]
         max_pages = options["max_pages"]
         email_to = options["email_to"]
@@ -182,7 +181,7 @@ class Command(BaseCommand):
 
             try:
                 data = fetch_page(page, limit)
-            except Exception as e:
+            except MoyskladClientError as e:
                 self.stderr.write(self.style.ERROR(f"Ошибка загрузки страницы {page}: {e}"))
                 break
 

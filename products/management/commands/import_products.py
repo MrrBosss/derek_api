@@ -1,10 +1,8 @@
 import sys
 import time
-import requests
-from requests.auth import HTTPBasicAuth
+from django.core.management.base import BaseCommand, CommandError
 
-from django.core.management.base import BaseCommand
-from django.conf import settings
+from products.moysklad_client import moysklad_client, MoyskladClientError
 
 from products.utils import create_or_update_product
 
@@ -15,13 +13,11 @@ def get_data(page: int, limit: int):
     """
     Возвращает JSON с товарами.
     """
-    resp = requests.get(
-        url=f"{API_URL}?limit={limit}&offset={page * limit}",
-        auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
-        timeout=60,
-    )
-    resp.raise_for_status()
-    return resp.json()
+    params = {
+        "limit": limit,
+        "offset": page * limit,
+    }
+    return moysklad_client.get_json(API_URL, params=params)
 
 
 class Command(BaseCommand):
@@ -55,6 +51,8 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         limit = options["limit"]
+        if limit > 1000:
+            raise CommandError("Moysklad API does not allow limit > 1000.")
         page = options["start_page"]
         index = options["start_index"]
         sleep_between = options["sleep"]
@@ -70,7 +68,7 @@ class Command(BaseCommand):
             # Загрузка страницы
             try:
                 data = get_data(page, limit)
-            except Exception as e:
+            except MoyskladClientError as e:
                 self.stderr.write(self.style.ERROR(
                     f"Ошибка загрузки данных со страницы {page}: {e}"
                 ))

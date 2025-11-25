@@ -1,17 +1,13 @@
 import time
 from urllib.parse import urlparse
-import requests
-from django.conf import settings
-from requests.auth import HTTPBasicAuth
 from django.core.files.base import ContentFile
 from products.models import Category, ProductWeight, Product, ProductColor, ProductPrice
+from .moysklad_client import moysklad_client, MoyskladClientError
 
 def get_images_data(url):
     try:
-        response = requests.get(url, auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD), timeout=60)
-        response.raise_for_status()
-        return response.json()
-    except requests.RequestException as e:
+        return moysklad_client.get_json(url)
+    except MoyskladClientError as e:
         print(f"Error fetching images data: {e}")
         return None
 
@@ -24,18 +20,13 @@ def save_images(product, images_request_url):
                 print(f"Image meta without downloadHref at index {i}")
                 continue
             try:
-                image_response = requests.get(
-                    download_href,
-                    auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
-                    timeout=120
-                )
-                image_response.raise_for_status()
-                image_content = ContentFile(image_response.content)
+                image_bytes = moysklad_client.get_binary(download_href, timeout=120)
+                image_content = ContentFile(image_bytes)
                 # Желательно дать имя файлу (если ваша модель ожидает):
                 # product.product_shots.create(image=ImageFile(image_content, name=f"{product.pk}_{i}.jpg"))
                 product.product_shots.create(image=image_content)
                 print(f"Image {i + 1} saved successfully for product {product.title}!")
-            except requests.RequestException as e:
+            except MoyskladClientError as e:
                 print(f"Error downloading image {i + 1}: {e}")
                 continue
     else:

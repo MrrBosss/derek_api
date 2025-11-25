@@ -1,11 +1,8 @@
 import traceback
 from urllib.parse import urlparse
 
-import requests
-from requests.auth import HTTPBasicAuth
 from dataclasses import dataclass
 
-from django.conf import settings
 from django.db import models
 from rest_framework import generics, mixins, viewsets
 from django_filters.rest_framework import DjangoFilterBackend
@@ -19,6 +16,11 @@ from .serializers import ProductSerializer, FAQSerializer, BannerSerializer, Bra
     ProductColorSerializer, CategorySerializer, OrderSerializer, CatalogSerializer, TeamSerializer, \
     ProductDetailSerializer, BestSellerSerializer, ProductDetailPriceSerializer, ProductShotsSerializer
 from .filters import ProductFilter
+from .moysklad_client import (
+    moysklad_client,
+    MoyskladClientError,
+    MoyskladCircuitOpenError,
+)
 from .utils import create_or_update_product, delete_product
 
 
@@ -186,6 +188,17 @@ class MoyskladProductAPIView(APIView):
             if not isinstance(events, list):
                 raise ValueError("Payload must contain 'events' list.")
 
+            if len(events) > 1000:
+                return Response(
+                    {
+                        "success": False,
+                        "message": "Request exceeds 1000 events limit; please split payload.",
+                        "processed_events": 0,
+                        "errors": ["Too many events in a single request."],
+                    },
+                    status=413,
+                )
+
             processed = 0
             errors = []
 
@@ -200,17 +213,18 @@ class MoyskladProductAPIView(APIView):
 
                 try:
                     if action in (ActionMapper.CREATE, ActionMapper.UPDATE):
-                        response = requests.get(
-                            href,
-                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
-                            timeout=60,
-                        )
-                        response.raise_for_status()
-                        create_or_update_product(response.json())
+                        product_data = moysklad_client.get_json(href)
+                        create_or_update_product(product_data)
                     elif action == ActionMapper.DELETE:
                         product_id = _extract_guid_from_href(href)
                         delete_product(product_id)
                     processed += 1
+                except MoyskladClientError as client_exc:
+                    errors.append(
+                        f"Moysklad client error for href '{href}': {client_exc}"
+                    )
+                    if isinstance(client_exc, MoyskladCircuitOpenError):
+                        break
                 except Exception as inner_exc:
                     errors.append(
                         f"Failed to process product event for href '{href}': {inner_exc}"
