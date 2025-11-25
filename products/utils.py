@@ -145,12 +145,25 @@ def create_or_get_category_hierarchy(category_path):
     return parent
 
 def delete_product(product_id):
-    from products.models import Product  # локальный импорт на всякий
-    product = Product.objects.filter(guid=product_id).first()
-    if product:
-        product.public = False
-        product.save()
-        print(f"Product '{product.title}' marked as deleted.")
+    """
+    Deletes single product variation (ProductPrice) and hides parent Product when
+    it no longer has any attached prices.
+    """
+    from products.models import ProductPrice  # локальный импорт на всякий
+
+    product_price = ProductPrice.objects.filter(guid=product_id).first()
+    if not product_price:
+        print(f"No product price found for guid {product_id}. Nothing to delete.")
+        return
+
+    related_products = list(product_price.product_set.all())
+    product_price.delete()
+
+    for product in related_products:
+        if not product.price.exists() and product.public:
+            product.public = False
+            product.save(update_fields=["public"])
+            print(f"Product '{product.title}' marked as deleted (no active prices).")
 
 def update_stock(data):
     from products.models import ProductPrice  # локальный импорт на всякий

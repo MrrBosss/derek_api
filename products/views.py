@@ -173,34 +173,57 @@ class ActionMapper:
     DELETE = "DELETE"
 
 
+def _extract_guid_from_href(url: str) -> str:
+    parsed_url = urlparse(url)
+    return parsed_url.path.rstrip('/').split('/')[-1]
+
+
 class MoyskladProductAPIView(APIView):
     def post(self, request):
         request_data = request.data
-        print(request_data)
         try:
-            meta = request_data['events'][0]['meta']  # product
-            event = meta['type']
-            action = request_data['events'][0]['action']  # product
-            if event == EventMapper.PRODUCT:
-                if action in (ActionMapper.CREATE, ActionMapper.UPDATE):
-                    url = meta['href']
-                    response = requests.get(url,
-                                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD))
-                    print(response.status_code)
-                    if response.status_code == 200:
-                        create_or_update_product(response.json())
-                elif action == ActionMapper.DELETE:
-                    url = meta['href']
-                    parsed_url = urlparse(url)
-                    product_id = parsed_url.path.split('/')[-1]
-                    delete_product(product_id)
-            elif event == EventMapper.COUNTERPARTY:
-                ...
-            elif event == EventMapper.RETAILDEMAND:
-                ...
+            events = request_data.get("events")
+            if not isinstance(events, list):
+                raise ValueError("Payload must contain 'events' list.")
 
-            data = {"success": True, "message": "Success"}
-            return Response(data)
+            processed = 0
+            errors = []
+
+            for event_payload in events:
+                meta = (event_payload or {}).get("meta") or {}
+                action = event_payload.get("action")
+                event_type = meta.get("type")
+                href = meta.get("href")
+
+                if event_type != EventMapper.PRODUCT or not href or not action:
+                    continue
+
+                try:
+                    if action in (ActionMapper.CREATE, ActionMapper.UPDATE):
+                        response = requests.get(
+                            href,
+                            auth=HTTPBasicAuth(settings.MOYSKLAD_LOGIN, settings.MOYSKLAD_PASSWORD),
+                            timeout=60,
+                        )
+                        response.raise_for_status()
+                        create_or_update_product(response.json())
+                    elif action == ActionMapper.DELETE:
+                        product_id = _extract_guid_from_href(href)
+                        delete_product(product_id)
+                    processed += 1
+                except Exception as inner_exc:
+                    errors.append(
+                        f"Failed to process product event for href '{href}': {inner_exc}"
+                    )
+
+            response_payload = {
+                "success": not errors,
+                "message": "Completed with errors" if errors else "Success",
+                "processed_events": processed,
+                "errors": errors,
+            }
+            status_code = 200 if not errors else 207
+            return Response(response_payload, status=status_code)
         except Exception as e:
             return Response(
                 {
@@ -214,18 +237,60 @@ class MoyskladProductAPIView(APIView):
 class MoyskladProductStockAPIView(APIView):
     def post(self, request):
         request_data = request.data
-        print(request_data)
         try:
-            for stock in request_data:
-                product_id = stock['assortmentId']
-                stock_count = stock['stock']
-                product = Product.objects.filter(guid=product_id).first()
-                if product:
-                    product.stock = int(stock_count)
-                    product.save()
+            stock_rows = []
+            if isinstance(request_data, list):
+                stock_rows = request_data
+            elif isinstance(request_data, dict):
+                stock_rows = request_data.get("rows", [])
+            else:
+                raise ValueError("Unsupported payload format for stocks.")
 
-            data = {"success": True, "message": "Success"}
-            return Response(data)
+            updated = 0
+            missing = []
+
+            for stock in stock_rows:
+                product_id = stock.get("assortmentId")
+                if not product_id:
+                    assortment_meta = (stock.get("assortment") or {}).get("meta") or {}
+                    href = assortment_meta.get("href")
+                    if href:
+                        product_id = _extract_guid_from_href(href)
+
+                if not product_id:
+                    continue
+
+                action = stock.get("action", ActionMapper.UPDATE)
+                stock_count = stock.get("stock", 0)
+                if action == ActionMapper.DELETE:
+                    stock_count = 0
+
+                try:
+                    normalized_stock = int(float(stock_count))
+                except (TypeError, ValueError):
+                    missing.append(f"{product_id}: invalid stock value '{stock_count}'")
+                    continue
+
+                try:
+                    product_price = ProductPrice.objects.filter(guid=product_id).first()
+                    if not product_price:
+                        missing.append(product_id)
+                        continue
+
+                    product_price.stock = normalized_stock
+                    product_price.save(update_fields=["stock"])
+                    updated += 1
+                except Exception as inner_exc:
+                    missing.append(f"{product_id}: {inner_exc}")
+
+            data = {
+                "success": True,
+                "message": "Success" if not missing else "Completed with missing records",
+                "updated": updated,
+                "missing": missing,
+            }
+            status_code = 200 if not missing else 207
+            return Response(data, status=status_code)
         except Exception as e:
             return Response(
                 {
