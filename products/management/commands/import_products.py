@@ -130,17 +130,7 @@ class Command(BaseCommand):
                 if sleep_between > 0:
                     time.sleep(sleep_between)
 
-                # Если нашли целевой товар, завершаем
-                if target_name and found_target:
-                    break
-
-                # Если нашли целевой товар, завершаем
-                if target_name and found_target:
-                    break
-
-            # Если нашли целевой товар, завершаем внешний цикл
-            if target_name and found_target:
-                break
+            # Продолжаем поиск всех подходящих товаров
 
             # Следующая страница; внутри страницы начинаем с 0
             page += 1
@@ -154,11 +144,11 @@ class Command(BaseCommand):
         if target_name:
             if found_target:
                 self.stdout.write(self.style.SUCCESS(
-                    f"Товар '{target_name}' успешно импортирован."
+                    f"Найдено и импортировано товаров серии '{target_name}': {total_ok}"
                 ))
             else:
                 self.stdout.write(self.style.WARNING(
-                    f"Товар '{target_name}' не найден среди {total_ok + total_err} просмотренных товаров."
+                    f"Товары серии '{target_name}' не найдены среди {total_ok + total_err} просмотренных товаров."
                 ))
         else:
             self.stdout.write(self.style.SUCCESS(
