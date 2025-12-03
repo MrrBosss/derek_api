@@ -24,7 +24,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         for i in range(2):
             try:
-                data = get_data(i)
+            data = get_data(i)
             except MoyskladClientError as exc:
                 self.stderr.write(self.style.ERROR(f"Не удалось загрузить остатки (страница {i}): {exc}"))
                 break

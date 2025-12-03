@@ -48,6 +48,12 @@ class Command(BaseCommand):
             default=0.0,
             help="Пауза (сек) между элементами для снижения нагрузки/ограничений API.",
         )
+        parser.add_argument(
+            "--name",
+            type=str,
+            default=None,
+            help="Начало названия товара для импорта (если указано, импортируются все товары, названия которых начинаются с этой строки).",
+        )
 
     def handle(self, *args, **options):
         limit = options["limit"]
@@ -56,12 +62,15 @@ class Command(BaseCommand):
         page = options["start_page"]
         index = options["start_index"]
         sleep_between = options["sleep"]
+        target_name = options["name"]
 
         total_ok = 0
         total_err = 0
+        found_target = False
 
+        import_mode = "specific product" if target_name else "all products"
         self.stdout.write(self.style.NOTICE(
-            f"Старт импорта: page={page} index={index} limit={limit}"
+            f"Старт импорта ({import_mode}): page={page} index={index} limit={limit}"
         ))
 
         while True:
@@ -85,10 +94,21 @@ class Command(BaseCommand):
             # Перебор элементов внутри страницы (с учётом возможного резюма)
             for i in range(index, len(rows)):
                 item = rows[i]
+                item_name = item.get('name', '')
+
+                # Если указано конкретное название, проверяем частичное совпадение (начинается с)
+                if target_name and not item_name.startswith(target_name):
+                    continue
+
                 try:
                     ok = create_or_update_product(item)  # True/False
                     if ok:
                         total_ok += 1
+                        if target_name:
+                            found_target = True
+                            self.stdout.write(self.style.SUCCESS(
+                                f"Найден и импортирован товар: {item_name}"
+                            ))
                     else:
                         total_err += 1
                 except Exception as e:
@@ -99,13 +119,28 @@ class Command(BaseCommand):
 
                 # Прогресс + точная подсказка, как продолжить
                 # (если оборвётся — возобновите со следующим индексом)
+                resume_cmd = f"RESUME: python manage.py import_products --start-page {page} --start-index {i+1} --limit {limit}"
+                if target_name:
+                    resume_cmd += f" --name '{target_name}'"
+
                 self.stdout.write(
-                    f"[page={page} idx={i}] ok={total_ok} err={total_err} | "
-                    f"RESUME: python manage.py import_products --start-page {page} --start-index {i+1} --limit {limit}"
+                    f"[page={page} idx={i}] ok={total_ok} err={total_err} | {resume_cmd}"
                 )
 
                 if sleep_between > 0:
                     time.sleep(sleep_between)
+
+                # Если нашли целевой товар, завершаем
+                if target_name and found_target:
+                    break
+
+                # Если нашли целевой товар, завершаем
+                if target_name and found_target:
+                    break
+
+            # Если нашли целевой товар, завершаем внешний цикл
+            if target_name and found_target:
+                break
 
             # Следующая страница; внутри страницы начинаем с 0
             page += 1
@@ -115,6 +150,17 @@ class Command(BaseCommand):
             if len(rows) < limit:
                 break
 
-        self.stdout.write(self.style.SUCCESS(
-            f"Импорт завершён. Итог: ok={total_ok}, err={total_err}"
-        ))
+        # Финальное сообщение
+        if target_name:
+            if found_target:
+                self.stdout.write(self.style.SUCCESS(
+                    f"Товар '{target_name}' успешно импортирован."
+                ))
+            else:
+                self.stdout.write(self.style.WARNING(
+                    f"Товар '{target_name}' не найден среди {total_ok + total_err} просмотренных товаров."
+                ))
+        else:
+            self.stdout.write(self.style.SUCCESS(
+                f"Импорт завершён. Итог: ok={total_ok}, err={total_err}"
+            ))
