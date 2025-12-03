@@ -35,12 +35,19 @@ class ProductShotsInline(admin.TabularInline):
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):
-    list_display = ['title', 'category',]
+    list_display = ['title', 'category', 'first_image_preview']
     search_fields = ['title']
     list_filter = ['category']
     autocomplete_fields = ('price',)
     raw_id_fields = ('price',)
     inlines = [ProductShotsInline]
+
+    def first_image_preview(self, obj):
+        first_shot = obj.product_shots.first()
+        if first_shot and first_shot.image:
+            return format_html('<img src="{}" style="max-width: 50px; max-height: 50px;" />', first_shot.image.url)
+        return "No image"
+    first_image_preview.short_description = 'Image'
 
 
 @admin.register(ProductPrice)
